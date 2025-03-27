@@ -18,11 +18,11 @@ class InMemoryStore:
         return self.data.get(key)
 
     def set(self, key, value):
-        while self.lock:
+        with self.lock:
             self.data[key] = value
 
     def delete(self, key):
-        while self.lock:
+        with self.lock:
             del self.data[key]
 
     def keys(self):
