@@ -1,7 +1,17 @@
 from fastapi.testclient import TestClient
 from src.network.api_server import app 
+import pytest
+from src.network.gossip import GossipManager
 
 client = TestClient(app)
+
+@pytest.fixture(autouse=True)
+def setup_gossip_manager():
+    peers = ["http://node1:8000", "http://node2:8000"]
+    gossip_manager = GossipManager(peers=peers, interval=5)
+    app.state.gossip_manager = gossip_manager
+    gossip_manager.start()
+    yield app, gossip_manager
 
 def test_receive_gossip():
     response = client.post("/gossip", json={"updates": [{"key": "key1", "value": "example", "timestamp": 0.0}]})
