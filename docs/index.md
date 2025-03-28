@@ -26,13 +26,9 @@ Lightweight, distributed NoSQL emulator that implements sharding and replication
     - does the system need to _store_ user's __data__? _which_? _where_?
     - most likely, there will be _multiple_ __roles__ 
 
-## Requirements
-
-# Project Requirements Documentation
+# Requirements
 
 ## 1. Functional Requirements
-
-Functional requirements define what the system should do and how it interacts with users or other systems. For your project, which involves a data storage system and communication using the gossip protocol, the functional requirements might include:
 
 ### Requirement 1: Data Management
 - **Description**: The system must allow storing, retrieving, modifying, and deleting data. Each operation must be performed through RESTful APIs.
