@@ -23,7 +23,8 @@ class InMemoryStore:
 
     def delete(self, key):
         with self.lock:
-            del self.data[key]
+            if key in self.data:
+                del self.data[key]
 
     def keys(self):
         return self.data.keys()

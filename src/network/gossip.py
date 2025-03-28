@@ -30,7 +30,8 @@ class GossipManager:
                 if len(self.future_updates) > 0:
                     try:
                         selected_peer = random.choice(self.peers)
-                        response = requests.post(selected_peer, json=self.future_updates)
+                        payload = {"updates": self.future_updates}
+                        response = requests.post(selected_peer + "/gossip", json=payload)
                         if response.status_code == 200:
                             with self.lock:
                                 self._clean_buffer(self)
