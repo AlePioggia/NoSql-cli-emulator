@@ -56,8 +56,6 @@ Lightweight, distributed NoSQL emulator that implements sharding and replication
 
 ## 2. Non-Functional Requirements
 
-Non-functional requirements define the qualities of the system that do not directly concern its behavior but describe how it should perform.
-
 ### Requirement 4: Scalability
 - **Description**: The system must be able to scale horizontally, meaning it should handle an increasing number of nodes and data volume without significant performance degradation.
 - **Acceptance Criteria**:
@@ -80,12 +78,10 @@ Non-functional requirements define the qualities of the system that do not direc
 
 ## 3. Implementation Requirements
 
-Implementation requirements define constraints on the system realization, such as the choice of programming language and software tools.
-
 ### Requirement 7: Programming Language and Framework
 - **Description**: The system must be implemented using Python, with the FastAPI framework for the API layer.
 - **Acceptance Criteria**:
-  - The application must be written in Python 3.x and use FastAPI for building the web services.
+  - The application must be written in Python and use FastAPI for building the web services.
   - All components of the system must comply with Python's best practices, including code style and modularity.
 
 ### Requirement 8: Dockerization
