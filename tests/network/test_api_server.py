@@ -3,6 +3,11 @@ from src.network.api_server import app
 
 client = TestClient(app)
 
+def test_receive_gossip():
+    response = client.post("/gossip", json={"updates": [{"key": "key1", "value": "example", "timestamp": 0.0}]})
+    assert response.status_code == 200
+    assert response.json() == {"message": "Gossip received"}
+
 def test_set_key():
     response = client.post("/set/key1", json={"value": "example"})
     assert response.status_code == 200
