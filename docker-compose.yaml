@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  node1:
+    build: .
+    ports:
+      - "8001:8000"
+    environment:
+      - NODE_ID=node1
+      - GOSSIP_PEERS=http://node2:8000,http://node3:8000
+    networks:
+      - gossip_network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "128M" 
+
+  node2:
+    build: .
+    ports:
+      - "8002:8000"
+    environment:
+      - NODE_ID=node2
+      - GOSSIP_PEERS=http://node1:8000,http://node3:8000
+    networks:
+      - gossip_network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "128M"
+
+  node3:
+    build: .
+    ports:
+      - "8003:8000"
+    environment:
+      - NODE_ID=node3
+      - GOSSIP_PEERS=http://node1:8000,http://node2:8000
+    networks:
+      - gossip_network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "128M"
+
+networks:
+  gossip_network:
+    driver: bridge
