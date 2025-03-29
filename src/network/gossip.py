@@ -29,7 +29,8 @@ class GossipManager:
 
     async def add_update(self, update):
         async with self.lock:
-            self.future_updates.append(update)
+            if update["id"] not in self.sent_gossips:
+                self.future_updates.append(update)
 
     async def _main_loop(self):
         async with httpx.AsyncClient() as client:
@@ -46,8 +47,6 @@ class GossipManager:
                                     "gossip_network": self.gossip_network.serialize()
                                 }
                                 for selected_peer in selected_peers:
-                                    print("peer selected", selected_peer)
-                                    print("payload", payload)
                                     response = await client.post(f"{selected_peer}/gossip", json=payload)
                                     if response.status_code == 200:
                                         self.sent_gossips[update["id"]] = update

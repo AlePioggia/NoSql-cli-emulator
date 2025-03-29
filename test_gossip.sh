@@ -1,3 +1,5 @@
+#!/bin/bash
+
 API_NODE1="http://localhost:8001"
 API_NODE2="http://localhost:8002"
 API_NODE3="http://localhost:8003"
@@ -6,7 +8,7 @@ TEST_KEY="gossip_test_key"
 TEST_VALUE="gossip_test_value"
 
 echo "Waiting for API to start..."
-sleep 5  
+sleep 1
 
 test_api() {
     local endpoint=$1
@@ -29,9 +31,8 @@ echo "Setting key on Node 1..."
 test_api "/set/$TEST_KEY" "POST" "{\"value\": \"$TEST_VALUE\"}" "$API_NODE1"
 
 echo "Waiting for gossip propagation..."
-sleep 10 
+sleep 15
 
-echo "Checking key on all nodes..."
 node1_value=$(test_api "/get/$TEST_KEY" "GET" "" "$API_NODE1")
 node2_value=$(test_api "/get/$TEST_KEY" "GET" "" "$API_NODE2")
 node3_value=$(test_api "/get/$TEST_KEY" "GET" "" "$API_NODE3")
