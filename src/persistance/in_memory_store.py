@@ -1,53 +1,56 @@
 import json
-import threading
-import time
+import asyncio
+import aiofiles
 
 class InMemoryStore:
     def __init__(self, storage_file="data.json", autosave_interval=10):
         self.storage_file = storage_file
         self.data = {}
-        self.lock = threading.Lock()
-
-        self._load_data_from_disk()
-
+        self.lock = asyncio.Lock()
         self.autosave_interval = autosave_interval
-        self.autosave_thread = threading.Thread(target=self._autosave, daemon=True)
-        self.autosave_thread.start()
 
-    def get(self, key):
-        return self.data.get(key)
+    async def start_autosave(self):
+        asyncio.create_task(self._autosave())
 
-    def set(self, key, value):
-        with self.lock:
+    async def get(self, key):
+        async with self.lock:
+            return self.data.get(key)
+
+    async def set(self, key, value):
+        async with self.lock:
             self.data[key] = value
 
-    def delete(self, key):
-        with self.lock:
+    async def delete(self, key):
+        async with self.lock:
             if key in self.data:
                 del self.data[key]
 
-    def keys(self):
-        return self.data.keys()
+    async def keys(self):
+        async with self.lock:
+            return self.data.keys()
 
-    def dump(self):
-        return json.dumps(self.data)
+    async def dump(self):
+        async with self.lock:
+            return json.dumps(self.data)
 
-    def load(self, data):
-        self.data = json.loads(data)
+    async def load(self, data):
+        async with self.lock:
+            self.data = json.loads(data)
 
-    def _load_data_from_disk(self):
+    async def _load_data_from_disk(self):
         try:
-            with open(self.storage_file, "r") as f:
-                self.data = json.load(f)
+            async with aiofiles.open(self.storage_file, "r") as f:
+                content = await f.read()
+                self.data = json.load(content)
         except FileNotFoundError:
             self.data = {}
     
-    def saveToDisk(self):
-        with self.lock:
-            with open(self.storage_file, "w") as f:
-                json.dump(self.data, f)
+    async def saveToDisk(self):
+        async with self.lock:
+            async with aiofiles.open(self.storage_file, "w") as f:
+                await f.write(json.dumps(self.data))
 
-    def _autosave(self):
+    async def _autosave(self):
         while True:
-            time.sleep(self.autosave_interval)
-            self.saveToDisk()
+            await asyncio.sleep(self.autosave_interval)
+            await self.saveToDisk()

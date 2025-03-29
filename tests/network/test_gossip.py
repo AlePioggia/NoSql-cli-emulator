@@ -1,39 +1,38 @@
 import pytest
-import threading
 from src.network.gossip import GossipManager
-import requests
+import pytest_asyncio
+import asyncio
 
-@pytest.fixture
-def test_gossip():
+@pytest_asyncio.fixture
+async def test_gossip():
     peers = ["http://peer1:5000/gossip", "http://peer2:5000/gossip"]
     gossip = GossipManager(peers=peers, interval=1)
+    await gossip.start()
     yield gossip
+    await gossip.stop()
 
-def test_add_update():
+@pytest.mark.asyncio
+async def test_add_update():
     peers = ["http://peer1:5000/gossip", "http://peer2:5000/gossip"]
     gossip = GossipManager(peers=peers, interval=1)
-    gossip.add_update({"key": "test", "value": "123"})
+    await gossip.add_update({"key": "test", "value": "123"})
     assert gossip.future_updates == [{"key": "test", "value": "123"}], "add_update failed"
 
-def test_concurrent_add_update():
+@pytest.mark.asyncio
+async def test_concurrent_add_update():
     peers = ["http://peer1:5000/gossip", "http://peer2:5000/gossip"]
     gossip = GossipManager(peers=peers, interval=1)
 
-    def add_updates():
+    async def add_updates():
         for _ in range(25):
-            gossip.add_update({"key": "test", "value": "123"})
+            await gossip.add_update({"key": "test", "value": "123"})
 
-    thread1 = threading.Thread(target=add_updates)
-    thread2 = threading.Thread(target=add_updates)
-
-    thread1.start()
-    thread2.start()
-    thread1.join()
-    thread2.join()
+    await asyncio.gather(add_updates(), add_updates())
 
     assert len(gossip.future_updates) == 50, "concurrent add_update failed"
 
-def test_clean_buffer(test_gossip):
+@pytest.mark.asyncio
+async def test_clean_buffer(test_gossip):
     test_gossip.future_updates = [{"key": "test", "value": "123"}]
-    test_gossip._clean_buffer()
+    await test_gossip._clean_buffer()
     assert test_gossip.future_updates == [], "_clean_buffer failed"

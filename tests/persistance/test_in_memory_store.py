@@ -1,32 +1,31 @@
-import os
-import json
 import pytest
-import time
+import asyncio
 from src.persistance.in_memory_store import InMemoryStore
+import pytest_asyncio
 
-@pytest.fixture
-def test_store(tmp_path):
+@pytest_asyncio.fixture
+async def test_store(tmp_path):
     test_file = tmp_path / "data_test.json"
     store = InMemoryStore(storage_file=str(test_file), autosave_interval=1)
+    await store._load_data_from_disk()
     yield store
+    await store.saveToDisk()
 
-def test_set_get(test_store):
-    test_store.set("key", "value")
-    assert test_store.get("key") == "value", "set/get failed"
+@pytest.mark.asyncio
+async def test_set_get(test_store):
+    await test_store.set("key", "value")
+    assert (await test_store.get("key")) == "value", "set/get failed"
 
-def test_delete(test_store):
-    test_store.set("key", "value")
-    test_store.delete("key")
-    assert test_store.get("key") is None, "delete failed"
+@pytest.mark.asyncio
+async def test_delete(test_store):
+    await test_store.set("key", "value")
+    await test_store.delete("key")
+    assert (await test_store.get("key") is None), "delete failed"
 
-def test_dump_load(test_store):
-    test_store.set("key", "value")
-    dumped = test_store.dump()
-    test_store.delete("key")
-    test_store.load(dumped)
-    assert test_store.get("key") == "value", "dump/load failed"
-
-# def test_autosave(test_store):
-#     test_store.set("key", "value")
-#     time.sleep(0.1)
-#     assert os.path.exists(test_store.storage_file), "autosave failed"
+@pytest.mark.asyncio
+async def test_dump_load(test_store):
+    await test_store.set("key", "value")
+    dumped = await test_store.dump()
+    await test_store.delete("key")
+    await test_store.load(dumped)
+    assert (await test_store.get("key")) == "value", "dump/load failed"
