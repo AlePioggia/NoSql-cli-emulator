@@ -1,10 +1,11 @@
+#!/bin/bash
+
 API_NODE1="http://localhost:8001"
 API_NODE2="http://localhost:8002"
 API_NODE3="http://localhost:8003"
 
 echo "🔄 Waiting for API to start..."
-sleep 5  
-
+sleep 5 
 write_to_node() {
     local node_url=$1
     local key=$2
