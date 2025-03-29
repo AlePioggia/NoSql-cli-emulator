@@ -5,3 +5,7 @@ httpx
 requests
 pytest-mock
 network
+aiofiles
+pytest-asyncio
+trio
+asgi_lifespan

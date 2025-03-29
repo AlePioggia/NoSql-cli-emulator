@@ -6,46 +6,34 @@ services:
     ports:
       - "8001:8000"
     environment:
-      - NODE_ID=node1
+      - NODE_ID=1
       - GOSSIP_PEERS=http://node2:8000,http://node3:8000
     networks:
       - gossip_network
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: "128M" 
+    mem_limit: 256M
 
   node2:
     build: .
     ports:
       - "8002:8000"
     environment:
-      - NODE_ID=node2
+      - NODE_ID=2
       - GOSSIP_PEERS=http://node1:8000,http://node3:8000
     networks:
       - gossip_network
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: "128M"
+    mem_limit: 256M
 
   node3:
     build: .
     ports:
       - "8003:8000"
     environment:
-      - NODE_ID=node3
+      - NODE_ID=3
       - GOSSIP_PEERS=http://node1:8000,http://node2:8000
     networks:
       - gossip_network
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: "128M"
-
+    mem_limit: 256M
+    
 networks:
   gossip_network:
     driver: bridge
