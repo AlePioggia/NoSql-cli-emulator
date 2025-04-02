@@ -3,11 +3,13 @@ import asyncio
 import httpx
 import uuid
 from src.model.Gossip import GossipNetwork
+from src.network.heartbeat import Heartbeat
 import os 
 
 class GossipManager:
 
-    def __init__(self, peers, interval):
+    def __init__(self, peers, interval, heartbeat=None):
+        self.heartbeat: Heartbeat = heartbeat
         self.peers = peers
         self.interval = interval
         self.future_updates = []
@@ -40,7 +42,8 @@ class GossipManager:
                 if len(self.future_updates) > 0:
                     try:
                         for update in self.future_updates:
-                            selected_peers = self.gossip_network.filter_peers(self.peers, update["id"], self.node_id)
+                            active_peers = await self.heartbeat.getActivePeers()
+                            selected_peers = self.gossip_network.filter_peers(active_peers, update["id"], self.node_id)
                             if selected_peers:
                                 payload = {
                                     "updates": [update],

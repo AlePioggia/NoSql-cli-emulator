@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from src.persistance.in_memory_store import InMemoryStore
 from src.network.gossip import GossipManager
+from src.network.heartbeat import Heartbeat
 import os
 from contextlib import asynccontextmanager
 import uuid
@@ -28,7 +29,10 @@ class KeyValueResponse(BaseModel):
 async def startup_event():
     peers_env = os.getenv("GOSSIP_PEERS", "")
     peers = peers_env.split(",") if peers_env else []
-    gossip_manager = GossipManager(peers=peers, interval=1)
+    heartbeat = Heartbeat(peers, 10)
+    await heartbeat.start()
+
+    gossip_manager = GossipManager(peers=peers, interval=1, heartbeat=heartbeat)
     app.state.gossip_manager = gossip_manager
     
     await app.state.gossip_manager.start()

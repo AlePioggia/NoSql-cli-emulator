@@ -34,7 +34,10 @@ class Heartbeat:
         except Exception as ex:
             print(f"Error sending heartbeat to {peer}: {ex}")
         return False
-        
+    
+    async def getActivePeers(self):
+        return list(self.active_peers)
+
     async def stop(self):
         self.isActive = False
         await asyncio.sleep(1)
