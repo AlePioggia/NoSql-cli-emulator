@@ -15,8 +15,8 @@ async def test_gossip():
 async def test_add_update():
     peers = ["http://peer1:5000/gossip", "http://peer2:5000/gossip"]
     gossip = GossipManager(peers=peers, interval=1)
-    await gossip.add_update({"key": "test", "value": "123"})
-    assert gossip.future_updates == [{"key": "test", "value": "123"}], "add_update failed"
+    await gossip.add_update({"id": "1", "key": "test", "value": "123"})
+    assert gossip.future_updates == [{"id": "1", "key": "test", "value": "123"}], "add_update failed"
 
 @pytest.mark.asyncio
 async def test_concurrent_add_update():
@@ -25,7 +25,7 @@ async def test_concurrent_add_update():
 
     async def add_updates():
         for _ in range(25):
-            await gossip.add_update({"key": "test", "value": "123"})
+            await gossip.add_update({"id": str(_), "key": "test", "value": "123"})
 
     await asyncio.gather(add_updates(), add_updates())
 
