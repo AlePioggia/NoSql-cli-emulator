@@ -9,3 +9,4 @@ aiofiles
 pytest-asyncio
 trio
 asgi_lifespan
+pytest_httpx
