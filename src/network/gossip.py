@@ -4,12 +4,13 @@ import httpx
 import uuid
 from src.model.Gossip import GossipNetwork
 from src.network.heartbeat import Heartbeat
+from src.network.sharding import ShardingManager
 import os 
 import time
 
 class GossipManager:
 
-    def __init__(self, peers, interval, heartbeat=None):
+    def __init__(self, peers, interval, heartbeat = None, shardManager: ShardingManager = None):
         self.heartbeat: Heartbeat = heartbeat
         self.peers = peers
         self.interval = interval
@@ -21,6 +22,8 @@ class GossipManager:
         self.gossip_network: GossipNetwork = GossipNetwork()
         self.node_id = os.getenv("NODE_ID", str(uuid.uuid4()))
         self.gossip_network.add_node(self.node_id)
+        self.node_address = os.getenv("NODE_ADDRESS", "http://localhost:8000")
+        self.shardManager = shardManager
 
     async def start(self):
         self._main_task = asyncio.create_task(self._main_loop())
@@ -32,6 +35,11 @@ class GossipManager:
 
     async def add_update(self, update):
         async with self.lock:
+            if self.shardManager is not None:
+                correct_node = self.shardManager.getHashedShardNumber(update["key"])
+                if correct_node != self.node_address:
+                    return
+
             if update["id"] not in self.sent_gossips:
                 update["timestamp"] = update.get("timestamp", time.time())
                 self.future_updates.append(update)

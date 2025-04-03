@@ -2,9 +2,12 @@ import json
 import asyncio
 import aiofiles
 import time
+from src.network.sharding import ShardingManager
 
 class InMemoryStore:
-    def __init__(self, storage_file="data.json", autosave_interval=10):
+    def __init__(self, storage_file="data.json", autosave_interval=10, shardManager=None, shardNumber=None):
+        self.shardManager: ShardingManager = shardManager
+        self.shardNumber = shardNumber
         self.storage_file = storage_file
         self.data = {}
         self.lock = asyncio.Lock()
@@ -20,6 +23,9 @@ class InMemoryStore:
             return None
 
     async def set(self, key, value, timestamp=None):
+        if self.shardManager and self.shardNumber is not None:
+            return
+
         async with self.lock:
             current_time = timestamp or time.time()
             if key not in self.data or self.data[key]["timestamp"] < current_time:
