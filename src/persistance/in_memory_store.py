@@ -1,6 +1,7 @@
 import json
 import asyncio
 import aiofiles
+import time
 
 class InMemoryStore:
     def __init__(self, storage_file="data.json", autosave_interval=10):
@@ -14,11 +15,15 @@ class InMemoryStore:
 
     async def get(self, key):
         async with self.lock:
-            return self.data.get(key)
+            if key in self.data:
+                return self.data[key]["value"]
+            return None
 
-    async def set(self, key, value):
+    async def set(self, key, value, timestamp=None):
         async with self.lock:
-            self.data[key] = value
+            current_time = timestamp or time.time()
+            if key not in self.data or self.data[key]["timestamp"] < current_time:
+                self.data[key] = {"value": value, "timestamp": current_time}
 
     async def delete(self, key):
         async with self.lock:

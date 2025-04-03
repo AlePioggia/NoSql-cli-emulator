@@ -16,6 +16,7 @@ class GossipUpdate(BaseModel):
     id: str
     key: str
     value: str
+    timestamp: float
 
 class GossipMessage(BaseModel):
     updates: list[GossipUpdate]
@@ -47,8 +48,8 @@ async def startup_event():
 @app.post("/gossip")
 async def receive_gossip(message: GossipMessage):
     for update in message.updates:
-        await app.state.store.set(update.key, update.value)
-        await app.state.gossip_manager.add_update({"id": update.id, "key": update.key, "value": update.value})
+        await app.state.store.set(update.key, update.value, timestamp=update.timestamp)
+        await app.state.gossip_manager.add_update({"id": update.id, "key": update.key, "value": update.value, "timestamp": update.timestamp})
     serialized_network = message.gossip_network
     await app.state.gossip_manager.update_network(serialized_network)
     return ValueModel(value="Gossip received")

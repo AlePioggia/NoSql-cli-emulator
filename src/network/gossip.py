@@ -5,6 +5,7 @@ import uuid
 from src.model.Gossip import GossipNetwork
 from src.network.heartbeat import Heartbeat
 import os 
+import time
 
 class GossipManager:
 
@@ -32,6 +33,7 @@ class GossipManager:
     async def add_update(self, update):
         async with self.lock:
             if update["id"] not in self.sent_gossips:
+                update["timestamp"] = update.get("timestamp", time.time())
                 self.future_updates.append(update)
 
     async def _main_loop(self):
