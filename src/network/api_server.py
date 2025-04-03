@@ -29,10 +29,10 @@ class KeyValueResponse(BaseModel):
 async def startup_event():
     peers_env = os.getenv("GOSSIP_PEERS", "")
     peers = peers_env.split(",") if peers_env else []
-    heartbeat = Heartbeat(peers, 10)
+    heartbeat = Heartbeat(peers, interval=2)
     await heartbeat.start()
 
-    gossip_manager = GossipManager(peers=peers, interval=1, heartbeat=heartbeat)
+    gossip_manager = GossipManager(peers=peers, interval=3, heartbeat=heartbeat)
     app.state.gossip_manager = gossip_manager
     
     await app.state.gossip_manager.start()

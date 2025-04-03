@@ -3,6 +3,7 @@ version: '3.8'
 services:
   node1:
     build: .
+    container_name: node1
     ports:
       - "8001:8000"
     environment:
@@ -14,6 +15,7 @@ services:
 
   node2:
     build: .
+    container_name: node2
     ports:
       - "8002:8000"
     environment:
@@ -25,6 +27,7 @@ services:
 
   node3:
     build: .
+    container_name: node3
     ports:
       - "8003:8000"
     environment:
