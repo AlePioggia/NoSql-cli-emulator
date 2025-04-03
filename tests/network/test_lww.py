@@ -1,11 +1,8 @@
 import pytest
-import asyncio
-import time
 from unittest.mock import AsyncMock, patch
 from src.persistance.in_memory_store import InMemoryStore
 from src.network.gossip import GossipManager
 from src.network.heartbeat import Heartbeat
-import uuid
 import pytest_asyncio
 
 @pytest.fixture
