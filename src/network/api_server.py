@@ -77,7 +77,6 @@ async def delete_key(key: str):
 async def get_keys():
     return {"keys": list(await app.state.store.keys())}
 
-# add heartbeat method
 @app.get("/heartbeat")
 async def heartbeat():
     return {"status": "alive"}
