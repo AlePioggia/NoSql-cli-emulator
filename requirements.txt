@@ -11,3 +11,5 @@ trio
 asgi_lifespan
 pytest_httpx
 xxhash
+pydantic-settings
+pydantic

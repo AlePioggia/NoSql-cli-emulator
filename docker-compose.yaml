@@ -8,7 +8,9 @@ services:
       - "8001:8000"
     environment:
       - NODE_ID=1
+      - SHARD_ID=0
       - GOSSIP_PEERS=http://node2:8000,http://node3:8000
+      - ALL_PEERS=http://node1:8000,http://node2:8000,http://node3:8000
     networks:
       - gossip_network
     mem_limit: 256M
@@ -20,7 +22,9 @@ services:
       - "8002:8000"
     environment:
       - NODE_ID=2
+      - SHARD_ID=1
       - GOSSIP_PEERS=http://node1:8000,http://node3:8000
+      - ALL_PEERS=http://node1:8000,http://node2:8000,http://node3:8000
     networks:
       - gossip_network
     mem_limit: 256M
@@ -32,7 +36,9 @@ services:
       - "8003:8000"
     environment:
       - NODE_ID=3
+      - SHARD_ID=2
       - GOSSIP_PEERS=http://node1:8000,http://node2:8000
+      - ALL_PEERS=http://node1:8000,http://node2:8000,http://node3:8000
     networks:
       - gossip_network
     mem_limit: 256M
