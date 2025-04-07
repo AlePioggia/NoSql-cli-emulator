@@ -3,6 +3,7 @@ import asyncio
 import aiofiles
 import time
 from src.network.sharding import ShardingManager
+from src.config import settings
 
 class InMemoryStore:
     def __init__(self, storage_file="data.json", autosave_interval=10, shardManager=None, shardNumber=None):
@@ -24,7 +25,10 @@ class InMemoryStore:
 
     async def set(self, key, value, timestamp=None):
         if self.shardManager and self.shardNumber is not None:
-            return
+            shardNumber = settings.Settings.SHARD_ID
+            correct_node = self.shardManager.getHashedShardNumber(key)
+            if shardNumber != correct_node:
+                return
 
         async with self.lock:
             current_time = timestamp or time.time()
