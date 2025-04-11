@@ -33,7 +33,7 @@ class VectorClock:
             
         if isLocalNodeGreater and not isRemoteNodeGreater:
             return VectorClockComparison.GREATER_THAN
-        elif isRemoteNodeGreater and not isLocalNodeGreater:
+        if isRemoteNodeGreater and not isLocalNodeGreater:
             return VectorClockComparison.LESS_THAN
         if isLocalNodeGreater and isRemoteNodeGreater:
             return VectorClockComparison.CONCURRENT
@@ -44,6 +44,11 @@ class VectorClock:
 
     @classmethod
     def from_dict(cls, node_id: str, clock_dict: Dict[str, int]):
-        vc = cls(node_id)
+        vc = cls()
         vc.clock = clock_dict.copy()
+        vc.node_id = node_id
         return vc
+    
+    def create_vector_from_dict(self, clock_dict: Dict[str, int]):
+        self.clock = clock_dict
+        return self

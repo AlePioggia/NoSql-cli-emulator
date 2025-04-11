@@ -7,6 +7,9 @@ import os
 from contextlib import asynccontextmanager
 import uuid
 from typing import Dict
+import time
+from src.clocks.conflict_resolver import LWW_resolve_conflict
+from src.utils.VectorClockResponsState import VectorClockResponseState
 
 app = FastAPI()
 
@@ -17,7 +20,6 @@ class GossipUpdate(BaseModel):
     id: str
     key: str
     value: str
-    timestamp: float
     vector_clock: Dict[str, int]
 
 class GossipMessage(BaseModel):
@@ -50,8 +52,14 @@ async def startup_event():
 @app.post("/gossip")
 async def receive_gossip(message: GossipMessage):
     for update in message.updates:
-        await app.state.store.set(update.key, update.value, timestamp=update.timestamp)
-        await app.state.gossip_manager.add_update({"id": update.id, "key": update.key, "value": update.value, "timestamp": update.timestamp})
+        local_vc, remote_vc = app.state.gossip_manager.vector_clock, update.vector_clock
+        local_value, remote_value = await app.state.store.get(update.key), update.value
+
+        lww = LWW_resolve_conflict(local_vc, remote_vc, local_value, remote_value)
+        if lww == VectorClockResponseState.ACCEPT:
+            await app.state.store.set(update.key, update.value, update.vector_clock)
+
+        await app.state.gossip_manager.add_update({"id": update.id, "key": update.key, "value": update.value})
     serialized_network = message.gossip_network
     await app.state.gossip_manager.update_network(serialized_network)
     return ValueModel(value="Gossip received")
@@ -59,8 +67,10 @@ async def receive_gossip(message: GossipMessage):
 @app.post("/set/{key}")
 async def set_key(key: str, data: ValueModel):
     await app.state.store.set(key, data.value)
+    app.state.gossip_manager.vector_clock.increment()
+
     gossip_id = str(uuid.uuid4())
-    await app.state.gossip_manager.add_update({"id": gossip_id, "key": key, "value": data.value})
+    await app.state.gossip_manager.add_update({"id": gossip_id, "key": key, "value": data.value, "vector_clock": app.state.gossip_manager.vector_clock.to_dict()})
     return {"key": key, "value": data.value}
 
 @app.get("/get/{key}")

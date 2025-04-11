@@ -1,4 +1,3 @@
-import random
 import asyncio
 import httpx
 import uuid
@@ -7,6 +6,7 @@ from src.network.heartbeat import Heartbeat
 from src.network.sharding import ShardingManager
 import os 
 import time
+from src.clocks.vector_clock import VectorClock
 
 class GossipManager:
 
@@ -24,6 +24,7 @@ class GossipManager:
         self.gossip_network.add_node(self.node_id)
         self.node_address = os.getenv("NODE_ADDRESS", "http://localhost:8000")
         self.shardManager = shardManager
+        self.vector_clock = VectorClock()
 
     async def start(self):
         self._main_task = asyncio.create_task(self._main_loop())
@@ -41,7 +42,6 @@ class GossipManager:
                     return
 
             if update["id"] not in self.sent_gossips:
-                update["timestamp"] = update.get("timestamp", time.time())
                 self.future_updates.append(update)
 
     async def _main_loop(self):

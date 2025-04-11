@@ -23,7 +23,7 @@ class InMemoryStore:
                 return self.data[key]["value"]
             return None
 
-    async def set(self, key, value, timestamp=None):
+    async def set(self, key, value, vector_clock: dict = None):
         if self.shardManager and self.shardNumber is not None:
             shardNumber = settings.Settings.SHARD_ID
             correct_node = self.shardManager.getHashedShardNumber(key)
@@ -31,9 +31,10 @@ class InMemoryStore:
                 return
 
         async with self.lock:
-            current_time = timestamp or time.time()
-            if key not in self.data or self.data[key]["timestamp"] < current_time:
-                self.data[key] = {"value": value, "timestamp": current_time}
+            self.data[key] = {
+                "value": value,
+                "vector_clock": vector_clock if vector_clock else {}
+            }
 
     async def delete(self, key):
         async with self.lock:
