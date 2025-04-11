@@ -6,9 +6,8 @@ class VectorClock:
     def __init__(self):
         self.node_id = settings.NODE_ID
         self.clock: Dict[str, int] = {}
-        for peer in settings.ALL_PEERS:
-            if peer != self.node_id:
-                self.clock[peer] = 0
+        for peer in settings.ALL_PEERS_IDS:
+            self.clock[peer] = 0
 
     def increment(self):
         self.clock[self.node_id] = self.clock.get(self.node_id, 0) + 1

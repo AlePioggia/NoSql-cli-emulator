@@ -11,6 +11,7 @@ services:
       - SHARD_ID=0
       - GOSSIP_PEERS=http://node2:8000,http://node3:8000
       - ALL_PEERS=http://node1:8000,http://node2:8000,http://node3:8000
+      - ALL_PEERS_IDS=1,2,3
     networks:
       - gossip_network
     mem_limit: 256M
@@ -25,6 +26,7 @@ services:
       - SHARD_ID=1
       - GOSSIP_PEERS=http://node1:8000,http://node3:8000
       - ALL_PEERS=http://node1:8000,http://node2:8000,http://node3:8000
+      - ALL_PEERS_IDS=1,2,3
     networks:
       - gossip_network
     mem_limit: 256M
@@ -39,6 +41,7 @@ services:
       - SHARD_ID=2
       - GOSSIP_PEERS=http://node1:8000,http://node2:8000
       - ALL_PEERS=http://node1:8000,http://node2:8000,http://node3:8000
+      - ALL_PEERS_IDS=1,2,3
     networks:
       - gossip_network
     mem_limit: 256M

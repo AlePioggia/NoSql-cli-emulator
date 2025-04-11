@@ -6,6 +6,7 @@ from src.network.heartbeat import Heartbeat
 import os
 from contextlib import asynccontextmanager
 import uuid
+from typing import Dict
 
 app = FastAPI()
 
@@ -17,6 +18,7 @@ class GossipUpdate(BaseModel):
     key: str
     value: str
     timestamp: float
+    vector_clock: Dict[str, int]
 
 class GossipMessage(BaseModel):
     updates: list[GossipUpdate]
