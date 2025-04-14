@@ -1,12 +1,14 @@
-from src.config.settings import settings
+# from src.config.settings import settings
 from typing import Dict
 from src.utils.VectorClockComparison import VectorClockComparison
+import os
 
 class VectorClock:
     def __init__(self):
-        self.node_id = settings.NODE_ID
+        self.node_id = os.getenv("NODE_ID", "1")
         self.clock: Dict[str, int] = {}
-        for peer in settings.ALL_PEERS_IDS:
+        all_peers_id = os.getenv("ALL_PEERS_IDS", "1,2,3").split(",")
+        for peer in all_peers_id:
             self.clock[peer] = 0
 
     def increment(self):

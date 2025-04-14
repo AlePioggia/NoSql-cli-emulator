@@ -5,7 +5,7 @@ from src.clocks.vector_clock import VectorClock
 from src.clocks.conflict_resolver import LWW_resolve_conflict
 
 @pytest.mark.parametrize("local_vc_dict, remote_vc_dict, local_value, remote_value, expected_response", [
-    ({"node-1": 1, "node-2": 1, "node-3": 1}, {"node-1": 1, "node-2": 1, "node-3": 1}, "local_value", "remote_value", VectorClockResponseState.NO_OP),
+    ({"node-1": 1, "node-2": 1, "node-3": 1}, {"node-1": 1, "node-2": 1, "node-3": 1}, "local_value", "remote_value", VectorClockResponseState.ACCEPT),
     ({"node-1": 1, "node-2": 1, "node-3": 1}, {"node-1": 2, "node-2": 2, "node-3": 2}, "local_value", "local_value", VectorClockResponseState.ACCEPT),
     ({"node-1": 2, "node-2": 2, "node-3": 2}, {"node-1": 1, "node-2": 1, "node-3": 1}, "remote_value", "local_value", VectorClockResponseState.REJECT),
 ])

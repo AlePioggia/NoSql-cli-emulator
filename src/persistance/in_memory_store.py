@@ -4,6 +4,7 @@ import aiofiles
 import time
 from src.network.sharding import ShardingManager
 from src.config import settings
+import os
 
 class InMemoryStore:
     def __init__(self, storage_file="data.json", autosave_interval=10, shardManager=None, shardNumber=None):
@@ -24,8 +25,8 @@ class InMemoryStore:
             return None
 
     async def set(self, key, value, vector_clock: dict = None):
-        if self.shardManager and self.shardNumber is not None:
-            shardNumber = settings.Settings.SHARD_ID
+        if self.shardManager is not None and self.shardNumber is not None:
+            shardNumber:int = os.getenv("SHARD_ID", 0)
             correct_node = self.shardManager.getHashedShardNumber(key)
             if shardNumber != correct_node:
                 return
@@ -57,7 +58,7 @@ class InMemoryStore:
         try:
             async with aiofiles.open(self.storage_file, "r") as f:
                 content = await f.read()
-                self.data = json.load(content)
+                self.data = json.loads(content)
         except FileNotFoundError:
             self.data = {}
     

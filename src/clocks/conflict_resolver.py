@@ -8,8 +8,10 @@ def LWW_resolve_conflict(local_vc: VectorClock, remote_vc_dict: dict, local_valu
         return VectorClockResponseState.ACCEPT
     elif comparison == VectorClockComparison.GREATER_THAN:
         return VectorClockResponseState.REJECT
-    elif comparison == VectorClockComparison.CONCURRENT:
-        return VectorClockResponseState.ACCEPT if hash(remote_value) > hash(local_value) else VectorClockResponseState.REJECT
-    elif comparison == VectorClockComparison.EQUAL:
-        return VectorClockResponseState.NO_OP
-    return VectorClockResponseState.NO_OP
+    else:
+        if sum(remote_vc_dict.values()) > sum(local_vc.clock.values()):
+            return VectorClockResponseState.ACCEPT
+        elif sum(remote_vc_dict.values()) < sum(local_vc.clock.values()):
+            return VectorClockResponseState.REJECT
+        else:
+            return VectorClockResponseState.ACCEPT if remote_value > local_value else VectorClockResponseState.REJECT
