@@ -56,6 +56,7 @@ class GossipManager:
                     for peer in list(self.unsent_updates.keys()):
                         if peer not in active_peers:
                             continue
+                        print(f"Retrying unsent updates to {peer}")
                         updates = self.unsent_updates.get(peer, [])
                         successful = []
                         for update in updates:
@@ -100,11 +101,13 @@ class GossipManager:
                 self.sent_gossips[update["id"]] = update
                 self.gossip_network.add_sent_gossip(self.node_id, update["id"], peer)
                 self.gossip_network.add_received_gossip(peer, update["id"], self.node_id)
+                return True
             else:
                 if peer not in self.unsent_updates:
-                    self.unsent_updates.push(peer, update)
+                    self.unsent_updates[peer] = update
                 else:
                     self.unsent_updates[peer].append(update)
+            return False
         except Exception as ex:
             print(f"Error sending gossip to {peer}: {ex}") 
 
