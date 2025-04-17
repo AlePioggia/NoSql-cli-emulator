@@ -10,6 +10,8 @@ from typing import Dict
 import time
 from src.clocks.conflict_resolver import LWW_resolve_conflict
 from src.utils.VectorClockResponsState import VectorClockResponseState
+from src.clocks.vector_clock import VectorClock
+import traceback
 
 app = FastAPI()
 
@@ -51,27 +53,46 @@ async def startup_event():
 
 @app.post("/gossip")
 async def receive_gossip(message: GossipMessage):
-    for update in message.updates:
-        local_vc, remote_vc = app.state.gossip_manager.vector_clock, update.vector_clock
-        local_value, remote_value = await app.state.store.get(update.key), update.value
+    try:
+        for update in message.updates:
+            local_value = await app.state.store.get(update.key)
+            local_vc = VectorClock()
+            local_vc.clock = await app.state.store.getVectorClock(update.key)
+            remote_value = update.value
+            remote_vc = VectorClock()
+            remote_vc.clock = update.vector_clock.copy()
 
-        lww = LWW_resolve_conflict(local_vc, remote_vc, local_value, remote_value)
-        if lww == VectorClockResponseState.ACCEPT:
-            await app.state.store.set(update.key, update.value, update.vector_clock)
+            if local_vc is None or local_value is None:
+                await app.state.store.set(update.key, update.value, remote_vc.clock)
+                await app.state.gossip_manager.add_update({"id": update.id, "key": update.key, "value": update.value, "vector_clock": remote_vc.clock})
+            else:
+                lww = LWW_resolve_conflict(local_vc, remote_vc.clock, local_value, remote_value)
+                if lww == VectorClockResponseState.ACCEPT:
+                    await app.state.store.set(update.key, update.value, remote_vc.clock)
+                    await app.state.gossip_manager.add_update({"id": update.id, "key": update.key, "value": update.value, "vector_clock": remote_vc.clock})
 
-        await app.state.gossip_manager.add_update({"id": update.id, "key": update.key, "value": update.value})
-    serialized_network = message.gossip_network
-    await app.state.gossip_manager.update_network(serialized_network)
-    return ValueModel(value="Gossip received")
+        serialized_network = message.gossip_network
+        await app.state.gossip_manager.update_network(serialized_network)
+        return ValueModel(value="Gossip received")
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error processing gossip: {str(e)}")
 
 @app.post("/set/{key}")
 async def set_key(key: str, data: ValueModel):
-    await app.state.store.set(key, data.value)
-    app.state.gossip_manager.vector_clock.increment()
-
-    gossip_id = str(uuid.uuid4())
-    await app.state.gossip_manager.add_update({"id": gossip_id, "key": key, "value": data.value, "vector_clock": app.state.gossip_manager.vector_clock.to_dict()})
-    return {"key": key, "value": data.value}
+    try:
+        current_vc: VectorClock = VectorClock()
+        clock = await app.state.store.getVectorClock(key)
+        if clock is not None:
+            current_vc.clock = clock.copy()
+        current_vc.increment()
+        await app.state.store.set(key, data.value, current_vc.clock)
+        gossip_id = str(uuid.uuid4())
+        await app.state.gossip_manager.add_update({"id": gossip_id, "key": key, "value": data.value, "vector_clock": current_vc.clock})
+        return {"key": key, "value": data.value}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error processing gossip: {str(e)}")
 
 @app.get("/get/{key}")
 async def get_key(key: str):

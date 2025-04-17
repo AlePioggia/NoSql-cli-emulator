@@ -5,6 +5,7 @@ import time
 from src.network.sharding import ShardingManager
 from src.config import settings
 import os
+from src.clocks.vector_clock import VectorClock
 
 class InMemoryStore:
     def __init__(self, storage_file="data.json", autosave_interval=10, shardManager=None, shardNumber=None):
@@ -24,7 +25,7 @@ class InMemoryStore:
                 return self.data[key]["value"]
             return None
 
-    async def set(self, key, value, vector_clock: dict = None):
+    async def set(self, key, value, vector_clock: VectorClock = None):
         if self.shardManager is not None and self.shardNumber is not None:
             shardNumber:int = os.getenv("SHARD_ID", 0)
             correct_node = self.shardManager.getHashedShardNumber(key)
@@ -36,6 +37,12 @@ class InMemoryStore:
                 "value": value,
                 "vector_clock": vector_clock if vector_clock else {}
             }
+
+    async def getVectorClock(self, key):
+        async with self.lock:
+            if key in self.data:
+                return self.data[key]["vector_clock"]
+            return None
 
     async def delete(self, key):
         async with self.lock:
