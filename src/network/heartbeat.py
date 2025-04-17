@@ -17,12 +17,15 @@ class Heartbeat:
 
     async def _check_peer_health(self):
         while self.isActive:
-            peers_copy = self.active_peers.copy()
+            peers_copy = self.peers.copy()
             for peer in peers_copy:
                 is_alive = await self._send_heartbeat(peer)
-                if not is_alive:
+                if not is_alive and peer in self.active_peers:
                     print(f"Peer {peer} is down, removing from active peers.")
                     self.active_peers.remove(peer)
+                else:
+                    if peer not in self.active_peers:
+                        self.active_peers.add(peer)
             await asyncio.sleep(self.interval)
     
     async def _send_heartbeat(self, peer):

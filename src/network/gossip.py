@@ -25,6 +25,7 @@ class GossipManager:
         self.node_address = os.getenv("NODE_ADDRESS", "http://localhost:8000")
         self.shardManager = shardManager
         self.vector_clock = VectorClock()
+        self.unsent_updates: dict[str, list] = {}
 
     async def start(self):
         self._main_task = asyncio.create_task(self._main_loop())
@@ -48,26 +49,64 @@ class GossipManager:
         async with httpx.AsyncClient() as client:
             while self.isRunning:
                 await asyncio.sleep(self.interval)
+                try:
+                    active_peers = await self.heartbeat.getActivePeers()
+                    
+                    # Retry pending updates
+                    for peer in list(self.unsent_updates.keys()):
+                        if peer not in active_peers:
+                            continue
+                        updates = self.unsent_updates.get(peer, [])
+                        successful = []
+                        for update in updates:
+                            success = await self._send_gossip_to_peer(client, peer, update)
+                            if success:
+                                successful.append(update)
+                        # remove old updates
+                        self.unsent_updates[peer] = [u for u in updates if u not in successful]
+                        if not self.unsent_updates[peer]:
+                            del self.unsent_updates[peer]
 
-                if len(self.future_updates) > 0:
-                    try:
-                        for update in self.future_updates:
-                            active_peers = await self.heartbeat.getActivePeers()
-                            selected_peers = self.gossip_network.filter_peers(active_peers, update["id"], self.node_id)
-                            if selected_peers:
-                                payload = {
-                                    "updates": [update],
-                                    "gossip_network": self.gossip_network.serialize()
-                                }
-                                for selected_peer in selected_peers:
-                                    response = await client.post(f"{selected_peer}/gossip", json=payload)
-                                    if response.status_code == 200:
-                                        self.sent_gossips[update["id"]] = update
-                                        self.gossip_network.add_sent_gossip(self.node_id, update["id"], selected_peer)
-                                        self.gossip_network.add_received_gossip(selected_peer, update["id"], self.node_id)
-                        await self._clean_buffer()
-                    except Exception as ex:
-                        print(f"Error in gossip loop: {ex}")
+                    # Send new updates
+                    updates_copy = self.future_updates.copy()
+                    for update in updates_copy:
+                        selected_peers = self.gossip_network.filter_peers(active_peers, update["id"], self.node_id)
+                        if not selected_peers:
+                            continue
+                        sent_to_all = True
+                        for peer in selected_peers:
+                            success = await self._send_gossip_to_peer(client, peer, update)
+                            if not success:
+                                sent_to_all = False
+                                if peer not in self.unsent_updates:
+                                    self.unsent_updates[peer] = []
+                                if update not in self.unsent_updates[peer]:
+                                    self.unsent_updates[peer].append(update)
+                        if sent_to_all:
+                            self.future_updates.remove(update)
+
+                except Exception as ex:
+                    print(f"Error in gossip loop: {ex}")
+
+
+    async def _send_gossip_to_peer(self, client, peer, update):
+        try:
+            payload = {
+                "updates": [update],
+                "gossip_network": self.gossip_network.serialize()
+            }
+            response = await client.post(f"{peer}/gossip", json=payload)
+            if response.status_code == 200:
+                self.sent_gossips[update["id"]] = update
+                self.gossip_network.add_sent_gossip(self.node_id, update["id"], peer)
+                self.gossip_network.add_received_gossip(peer, update["id"], self.node_id)
+            else:
+                if peer not in self.unsent_updates:
+                    self.unsent_updates.push(peer, update)
+                else:
+                    self.unsent_updates[peer].append(update)
+        except Exception as ex:
+            print(f"Error sending gossip to {peer}: {ex}") 
 
     async def update_network(self, serialized_network: str):
         new_network = GossipNetwork.deserialize(serialized_network)
