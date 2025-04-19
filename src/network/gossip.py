@@ -38,8 +38,9 @@ class GossipManager:
     async def add_update(self, update):
         async with self.lock:
             if self.shardManager is not None:
+                shard_number: int = os.getenv("SHARD_NUMBER", "0")
                 correct_node = self.shardManager.getHashedShardNumber(update["key"])
-                if correct_node != self.node_address:
+                if correct_node != shard_number:
                     return
 
             if update["id"] not in self.sent_gossips:
