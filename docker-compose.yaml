@@ -10,6 +10,7 @@ services:
       - NODE_ID=1
       - SHARD_ID=0
       - GOSSIP_PEERS=http://node2:8000,http://node3:8000
+      - ENABLE_SHARDING=${ENABLE_SHARDING}
       - ALL_PEERS=http://node1:8000,http://node2:8000,http://node3:8000
       - ALL_PEERS_IDS=1,2,3
     networks:
@@ -25,6 +26,7 @@ services:
       - NODE_ID=2
       - SHARD_ID=1
       - GOSSIP_PEERS=http://node1:8000,http://node3:8000
+      - ENABLE_SHARDING=${ENABLE_SHARDING}
       - ALL_PEERS=http://node1:8000,http://node2:8000,http://node3:8000
       - ALL_PEERS_IDS=1,2,3
     networks:
@@ -40,6 +42,7 @@ services:
       - NODE_ID=3
       - SHARD_ID=2
       - GOSSIP_PEERS=http://node1:8000,http://node2:8000
+      - ENABLE_SHARDING=${ENABLE_SHARDING}
       - ALL_PEERS=http://node1:8000,http://node2:8000,http://node3:8000
       - ALL_PEERS_IDS=1,2,3
     networks:
