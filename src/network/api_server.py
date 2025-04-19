@@ -12,6 +12,7 @@ from src.clocks.conflict_resolver import LWW_resolve_conflict
 from src.utils.VectorClockResponsState import VectorClockResponseState
 from src.clocks.vector_clock import VectorClock
 import traceback
+from src.network.sharding import ShardingManager
 
 app = FastAPI()
 
@@ -39,7 +40,8 @@ async def startup_event():
     heartbeat = Heartbeat(peers, interval=2)
     await heartbeat.start()
 
-    gossip_manager = GossipManager(peers=peers, interval=3, heartbeat=heartbeat)
+    enable_sharding: bool = os.getenv("ENABLE_SHARDING", "false").lower() == "true"    
+    gossip_manager = GossipManager(peers=peers, interval=3, heartbeat=heartbeat, shardManager=None if not enable_sharding else ShardingManager())
     app.state.gossip_manager = gossip_manager
     
     await app.state.gossip_manager.start()
