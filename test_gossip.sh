@@ -7,6 +7,8 @@ API_NODE3="http://localhost:8003"
 TEST_KEY="gossip_test_key"
 TEST_VALUE="gossip_test_value"
 
+API_KEY="abc123ef-read,write,delete-2025-12-31"
+
 echo "Waiting for API to start..."
 sleep 1
 
@@ -17,9 +19,10 @@ test_api() {
     local node_url=$4
 
     if [ "$method" == "POST" ]; then
-        response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$node_url$endpoint" -H "Content-Type: application/json" -d "$data")
+        response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$node_url$endpoint" -H "Content-Type: application/json" -H "X-API-KEY: $API_KEY" -d "$data")
     elif [ "$method" == "GET" ]; then
-        response=$(curl -s -X GET "$node_url$endpoint")
+        response=$(curl -s -X GET "$node_url$endpoint" \
+            -H "X-API-KEY: ${API_KEY}")
     fi
 
     echo "$response"
