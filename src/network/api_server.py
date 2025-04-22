@@ -113,7 +113,7 @@ async def get_key(key: str, request: Request):
     api_key_validator = APIKeyValidator(api_key)
     if not api_key_validator.validate_api_key():
         raise HTTPException(status_code=403, detail="Invalid API Key")
-    if not api_key_validator.has_permission("user") or not api_key_validator.has_permission("admin"):
+    if (not api_key_validator.has_permission("admin")) and (not api_key_validator.has_permission("standard")):
         raise HTTPException(status_code=403, detail="Permission denied")
     value = await app.state.store.get(key)
     if value is None:
@@ -137,7 +137,7 @@ async def get_keys(request: Request):
     api_key_validator = APIKeyValidator(api_key)
     if not api_key_validator.validate_api_key():
         raise HTTPException(status_code=403, detail="Invalid API Key")
-    if not api_key_validator.has_permission("admin") or not api_key_validator.has_permission("user"):
+    if (not api_key_validator.has_permission("admin")) and (not api_key_validator.has_permission("standard")):
         raise HTTPException(status_code=403, detail="Permission denied")
     return {"keys": list(await app.state.store.keys())}
 
