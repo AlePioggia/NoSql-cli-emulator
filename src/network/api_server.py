@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Header, Request
 from pydantic import BaseModel
 from src.persistance.in_memory_store import InMemoryStore
 from src.network.gossip import GossipManager
@@ -13,6 +13,7 @@ from src.utils.VectorClockResponsState import VectorClockResponseState
 from src.clocks.vector_clock import VectorClock
 import traceback
 from src.network.sharding import ShardingManager
+from src.security.api_key_validator import APIKeyValidator
 
 app = FastAPI()
 
@@ -80,9 +81,19 @@ async def receive_gossip(message: GossipMessage):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error processing gossip: {str(e)}")
 
+def get_api_key(api_key: str = Header(...)):
+    return api_key
+
 @app.post("/set/{key}")
-async def set_key(key: str, data: ValueModel):
+async def set_key(key: str, data: ValueModel, request:Request):
     try:
+        api_key = request.headers.get("X-API-KEY")
+        api_key_validator = APIKeyValidator(api_key)
+        if not api_key_validator.validate_api_key():
+            raise HTTPException(status_code=403, detail="Invalid API Key")
+        if not api_key_validator.has_permission("admin"):
+            raise HTTPException(status_code=403, detail="Permission denied")
+        
         current_vc: VectorClock = VectorClock()
         clock = await app.state.store.getVectorClock(key)
         if clock is not None:
@@ -97,19 +108,37 @@ async def set_key(key: str, data: ValueModel):
         raise HTTPException(status_code=500, detail=f"Error processing gossip: {str(e)}")
 
 @app.get("/get/{key}")
-async def get_key(key: str):
+async def get_key(key: str, request: Request):
+    api_key = request.headers.get("X-API-KEY")
+    api_key_validator = APIKeyValidator(api_key)
+    if not api_key_validator.validate_api_key():
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    if not api_key_validator.has_permission("user") or not api_key_validator.has_permission("admin"):
+        raise HTTPException(status_code=403, detail="Permission denied")
     value = await app.state.store.get(key)
     if value is None:
         raise HTTPException(status_code=404, detail="Key not found")
     return {"key": key, "value": value}
 
 @app.delete("/delete/{key}")
-async def delete_key(key: str):
+async def delete_key(key: str, request: Request):
+    api_key = request.headers.get("X-API-KEY")
+    api_key_validator = APIKeyValidator(api_key)
+    if not api_key_validator.validate_api_key():
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    if not api_key_validator.has_permission("admin"):
+        raise HTTPException(status_code=403, detail="Permission denied")
     await app.state.store.delete(key)
     return {"key": key}
 
 @app.get("/keys")
-async def get_keys():
+async def get_keys(request: Request):
+    api_key = request.headers.get("X-API-KEY")
+    api_key_validator = APIKeyValidator(api_key)
+    if not api_key_validator.validate_api_key():
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    if not api_key_validator.has_permission("admin") or not api_key_validator.has_permission("user"):
+        raise HTTPException(status_code=403, detail="Permission denied")
     return {"keys": list(await app.state.store.keys())}
 
 @app.get("/heartbeat")

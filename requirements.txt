@@ -13,3 +13,5 @@ pytest_httpx
 xxhash
 pydantic-settings
 pydantic
+python-jose[cryptography]
+passlib[bcrypt]
