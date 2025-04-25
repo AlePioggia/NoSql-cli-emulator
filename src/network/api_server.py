@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import FastAPI, HTTPException, Depends, Header, Request
 from pydantic import BaseModel
 from src.persistance.in_memory_store import InMemoryStore
@@ -14,6 +15,8 @@ from src.clocks.vector_clock import VectorClock
 import traceback
 from src.network.sharding import ShardingManager
 from src.security.api_key_validator import APIKeyValidator
+from src.network.discovery import PeerDiscovery
+import logging
 
 app = FastAPI()
 
@@ -36,23 +39,33 @@ class KeyValueResponse(BaseModel):
 
 @app.on_event("startup")
 async def startup_event():
-    peers_env = os.getenv("GOSSIP_PEERS", "")
-    peers = peers_env.split(",") if peers_env else []
-    heartbeat = Heartbeat(peers, interval=2)
-    await heartbeat.start()
+    try:
+        print("1")
+        discovery = PeerDiscovery()
+        await discovery.start()
+        await discovery.broadcast_hello(times=3, interval=0.5)
+        await asyncio.sleep(2)
+        initial_peers = discovery.get_peers()
+        
+        heartbeat = Heartbeat(initial_peers, interval=2)
+        await heartbeat.start()
 
-    enable_sharding: bool = os.getenv("ENABLE_SHARDING", "false").lower() == "true"    
-    gossip_manager = GossipManager(peers=peers, interval=3, heartbeat=heartbeat, shardManager=None if not enable_sharding else ShardingManager())
-    app.state.gossip_manager = gossip_manager
-    
-    await app.state.gossip_manager.start()
-    
-    store = InMemoryStore()
-    app.state.store = store 
-    
-    await app.state.store._load_data_from_disk()
-    
-    await app.state.store.start_autosave()
+        enable_sharding: bool = os.getenv("ENABLE_SHARDING", "false").lower() == "true"    
+        gossip_manager = GossipManager(peers=initial_peers, interval=3, heartbeat=heartbeat, shardManager=None if not enable_sharding else ShardingManager())
+        app.state.gossip_manager = gossip_manager
+        
+        await app.state.gossip_manager.start()
+        
+        store = InMemoryStore()
+        app.state.store = store 
+        
+        await app.state.store._load_data_from_disk()
+        
+        await app.state.store.start_autosave()
+    except Exception as e:
+        logging.error(f"Error during startup: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Error during startup")
 
 @app.post("/gossip")
 async def receive_gossip(message: GossipMessage):
