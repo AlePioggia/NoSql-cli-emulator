@@ -62,6 +62,17 @@ async def startup_event():
         await app.state.store._load_data_from_disk()
         
         await app.state.store.start_autosave()
+        
+        async def refresh_peers_loop():
+            while True:
+                await asyncio.sleep(30)
+                await discovery.broadcast_hello(times=1, interval=0.1)
+                await asyncio.sleep(1)
+                for p in discovery.get_peers():
+                    await heartbeat.add_peer(p)         
+                    await gossip_manager.add_peer(p)       
+
+        asyncio.create_task(refresh_peers_loop())
     except Exception as e:
         logging.error(f"Error during startup: {e}")
         traceback.print_exc()

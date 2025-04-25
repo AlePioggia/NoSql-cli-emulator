@@ -41,6 +41,11 @@ class Heartbeat:
     async def getActivePeers(self):
         return list(self.active_peers)
 
+    async def add_peer(self, peer_url:str):
+        if peer_url not in self.peers:
+            self.peers.append(peer_url)
+            self.active_peers.add(peer_url)
+
     async def stop(self):
         self.isActive = False
         await asyncio.sleep(1)

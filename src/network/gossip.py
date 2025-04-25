@@ -116,6 +116,11 @@ class GossipManager:
         new_network = GossipNetwork.deserialize(serialized_network)
         self.gossip_network.update_network(new_network)
 
+    async def add_peer(self, peer_url: str):
+        if peer_url not in self.peers:
+            self.peers.append(peer_url)
+            self.gossip_network.add_node(peer_url)
+
     async def _clean_buffer(self):
         async with self.lock:
             self.future_updates = []
