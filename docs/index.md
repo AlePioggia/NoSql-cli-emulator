@@ -19,12 +19,19 @@ The project goal is to develop a lightweight, distributed NoSQL emulator that im
 
 Lightweight, distributed NoSQL emulator that implements sharding and replication using a peer-to-peer (P2P) architecture. The system will follow the BASE (Basically Available, Soft state, Eventually consistent) approach, ensuring high availability and reasonable fault tolerance while prioritizing low latency for read and write operations. It’s a cli application, interaction will be based on scripts or command line commands.
 
+### Use case collection
+
 - Use case collection
     - _where_ are the users? 
+    Users access the system remotely via internet, using an API key;
     - _when_ and _how frequently_ do they interact with the system?
-    - _how_ do they _interact_ with the system? which _devices_ are they using? pcs
+    interaction is very frequent and latency-sensitive, as a distributed key-value storage, the system is designed for high-throughput and low-latency access, potentially handling thousands of requests per second;
+    - _how_ do they _interact_ with the system? which _devices_ are they using?
+    Users interact via http api calls, primarly using PCs, but also smartphone can send their requests, but it's unlikely since for now, there's no GUI, only cli app;
     - does the system need to _store_ user's __data__? _which_? _where_?
+    The system does not store personal data, authentication is handled through API keys, sold separately. Only the key-value pairs submitted by users are stored, inside the storage containers/nodes
     - most likely, there will be _multiple_ __roles__ 
+    There are 2 main roles, standard users have read-only access, admins have both read and write permissions.
 
 # Requirements
 
