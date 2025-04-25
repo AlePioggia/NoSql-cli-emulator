@@ -1,4 +1,4 @@
-API_KEY="abc123ef-read,write,delete-2025-12-31"
+API_KEY="abc123ef-admin-2025-12-31"
 KEY="mykey"
 VALUE="example_value"
 

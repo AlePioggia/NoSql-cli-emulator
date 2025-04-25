@@ -7,7 +7,7 @@ API_NODE3="http://localhost:8003"
 TEST_KEY="gossip_test_key"
 TEST_VALUE="gossip_test_value"
 
-API_KEY="abc123ef-read,write,delete-2025-12-31"
+API_KEY="abc123ef-admin-2025-12-31"
 
 echo "Waiting for API to start..."
 sleep 1
