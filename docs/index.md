@@ -44,13 +44,12 @@ Lightweight, distributed NoSQL emulator that implements sharding and replication
   - The operations for `set` and `get` should correctly store and retrieve data.
   - A `GET` request for a non-existent key should return a 404 error.
 
-### Requirement 2: Gossip Protocol
+### Requirement 2: Data replication
 - **Description**: The system must implement a gossip protocol mechanism that allows data replication between nodes. Nodes should be able to exchange updates periodically using a gossip strategy.
 - **Acceptance Criteria**:
   - Each node must be capable of sending and receiving updates via the gossip protocol.
   - When a node receives an update, it must update its local state (memory).
-  - Updates should be correctly synchronized between nodes, and the data must be identical across all nodes.
-  - In the case of communication failures, nodes should attempt to re-establish the connection.
+  - Updates should be correctly synchronized between nodes, and the data must be identical across all nodes at some point in time (eventual consistency).
 
 ### Requirement 3: Heartbeat and Node Monitoring
 - **Description**: The system must implement a heartbeat mechanism to monitor the health of nodes.
@@ -59,39 +58,59 @@ Lightweight, distributed NoSQL emulator that implements sharding and replication
   - The system should detect if any node is unresponsive or down and handle the situation by either retrying or marking it as unavailable.
   - Nodes should be able to adapt to the failure of other nodes, ensuring that data replication continues despite any node failures.
 
+### Requirement 4: Service discovery
+- **Description**: Every peer should be able to find other nodes, by using a service discovery mechanism. The implementation needs to be made with UDP protocol or broadcast messages, since a centralized approach will be avoided.
+- **Acceptance Criteria**:
+  - system should recognize and include in the p2p network, new added nodes;
+  - system should work even without static definition of nodes;
+  - service discovery should always be up, and decentralized.
+
+### Requirement 5: Data synchronization
+- **Description**: The system should be able to maintain a good data synchronization
+- **Acceptance criteria**
+  - implementation of lamport vector clocks, in order to handle different clocks;
+  - conflict resolution, via LWW (last write wins) mechanism
+
+### Requirement 6: Sharding
+- **Description** Nodes should also be able to make a sharding mechanism available, that can be activate using a parameter;
+- **Acceptance criteria**
+  - hash sharding should be implemented;
+  - if sharding is enabled, data should be saved accordingly to the hash function.
+
 ---
 
 ## 2. Non-Functional Requirements
 
-### Requirement 4: Scalability
+### Requirement 7: Scalability
 - **Description**: The system must be able to scale horizontally, meaning it should handle an increasing number of nodes and data volume without significant performance degradation.
 - **Acceptance Criteria**:
   - The system should be able to add new nodes dynamically without disrupting existing operations.
   - The system should handle increased data volume efficiently.
 
-### Requirement 5: Fault Tolerance
+### Requirement 8: Fault Tolerance
 - **Description**: The system should be resilient to node failures and network issues, ensuring continued operation even in the presence of failures.
 - **Acceptance Criteria**:
   - In case of node failure, the system should continue operating and retry data replication from the remaining nodes.
   - The system must recover gracefully from network partitions and re-sync data once the network is restored.
 
-### Requirement 6: Availability
-- **Description**: The system should ensure high availability, meaning the data should be accessible even if some of the nodes are unavailable.
+### Requirement 9: Eventual consistency and soft state
+- **Description**: The system must have eventual consistency and soft state, making it fast performance wise
 - **Acceptance Criteria**:
-  - At least one node should always be available to serve read and write requests.
-  - If one or more nodes go down, the system should still function, ensuring the availability of data through other nodes.
+  - The system must ensure that, given enough time and absence of further updates, all nodes converge to the same data state (eventual consistency);
+  - Nodes must be able to accept and temporarily operate on incomplete or outdated information (soft state);
+  - Clients must tolerate stale reads and temporary inconsistencies during periods of synchronization.
 
 ---
 
 ## 3. Implementation Requirements
 
-### Requirement 7: Programming Language and Framework
+### Requirement 9: Programming Language and Framework
 - **Description**: The system must be implemented using Python, with the FastAPI framework for the API layer.
 - **Acceptance Criteria**:
   - The application must be written in Python and use FastAPI for building the web services.
   - All components of the system must comply with Python's best practices, including code style and modularity.
 
-### Requirement 8: Dockerization
+### Requirement 10: Dockerization
 - **Description**: The system must be containerized using Docker to ensure easy deployment and scaling.
 - **Acceptance Criteria**:
   - A Dockerfile must be provided to build and run the application.
@@ -106,6 +125,8 @@ Lightweight, distributed NoSQL emulator that implements sharding and replication
 - **Gossip Protocol**: A communication protocol in which nodes periodically exchange information to propagate updates and synchronize data across the network.
 - **Heartbeat**: A signal sent by a node to indicate its status (alive or down) in the system.
 - **Replication**: The process of copying data from one node to another to ensure data consistency and availability across the system.
+- **Vector clocks**: data structure used to synchronize clocks in a distributed system, based on lamport intuition;
+- **Service discovery**: mechanism useful for finding nodes on a network.
 
 ## Design
 
