@@ -303,18 +303,43 @@ Conflict resolution handles the conflict using the last write wins (LWW) mechani
 - Is there any data that needs to be stored?
     * _what_ data? _where_? _why_?
 
-- how should _persistent data_ be __stored__?
-    * e.g. relations, documents, key-value, graph, etc.
-    * why?
+The project itself has the ultimate goal to deal with storing data efficiently, avoiding failures and conflicts. 
+The data stored, is the key-value pair, and each pair is linked to a vector clock, that let the system take track of the data version, in order to solve eventual conflicts.
 
-- Which components perform queries on the database?
-    * _when_? _which_ queries? _why_?
-    * concurrent read? concurrent write? why?
+Data is stored locally inside each peer, inside a json document. This choice was made in order to work without existing database technology, in order to experiment how to develop a good storage system from scratch. 
 
-- Is there any data that needs to be shared between components?
-    * _why_? _what_ data?
+Queries on data are performed during CRUD operations (POST, GET, DELETE), and these can be initiated by users or during gossip propagation between peers.
+Both concurred reads and writes are supported, since multiple nodes can both:
+- serve read request simultaneously without conflicts (tolerance approach to favour latency);
+- handle concurrent write requests, with conflict resolution, handled with vector clock and Last Write Wins (LWW) mechanism. 
+
+Data is shared between different components, since synchronization, replication, fault tolerance and sharding (if enabled) are considered. Not only key-value pairs are shared, also these:
+- vector clocks;
+- gossip network state: shared between nodes to track which updates have been sent or received;
+- peer list: shared between the Heartbeat and GossipManager to determine active peers for gossip propagation.
+As stated before, communication and data sharing happens via http requests, using headers and query parameters.
 
 ### Fault-Tolerance
 
-- Is there any form of data __replication__ / federation / sharing?
-    * _why_? _how_ does it work?
+#### Data replication
+
+The system uses a gossip protocol to replicate updates between nodes and to synchronize data. When a key-value pair is updated on one node, the update is propagated to other nodes in the network. The propagation also includes the gossip network and the vector clocks, in order to have better performance, avoiding useless messages to be sent. Replication in this case ensures eventual consistency and soft state, meaning all nodes will converge to the same state over time and it's also available.
+
+#### Failure recovery
+
+- Node failure
+ - if a node becomes unresponsive, it's up to the heartbeat mechanism to detect the node and to remove it from the active peer list. The gossip protocol and eventual consistency still allows users to access data.
+
+- Network partitions
+ - during a network partition, nodes in different partitions continue to operate independently. Once the partition is resolved, the gossip protocol synchronizes the data between partition. 
+
+- Data recovery and reconciliation mechanism
+ - when a failed node rejoins the network, it receives missed updates that has been stored in other peers, and that's triggered initially by the heartbeat mechanism.
+
+##### Gossip protocol
+
+- gossip protocol description (todo)
+
+- testing explanation (todo)
+
+- reconciliation in depth explanation
