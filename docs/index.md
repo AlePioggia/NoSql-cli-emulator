@@ -209,7 +209,7 @@ Each peer can find others, since a decentralized service discovery mechanism was
 
 ---
 
-## System State
+#### System State
 
 | State Element | Description |
 |:--------------|:------------|
@@ -226,19 +226,77 @@ Each peer can find others, since a decentralized service discovery mechanism was
 
 ### Interaction
 
-- how do components _communicate_? _when_? _what_? 
-- _which_ __interaction patterns__ do they enact?
+#### communication
 
-> Sequence diagrams are welcome here
+- client to node -> crud operations, sent via http to the exposed api, then the server receives the messages, needs api key
+- gossip (node to node) -> share state and communicate events
+- heartbeat (node to node) -> check health and active peers via /heartbeat endpoint
+- discovery (node to node) -> discover new nodes
+
+#### interaction patterns
+
+- async request/response pattern: clients send asynchronous CRUD requests to the api, then the server elaborate the requests and replies
+- publish-subscribe: Updates are queued by the GossipManager and delivered asynchronously to peers via HTTP POST; peers subscribe by exposing a gossip endpoint;
+- periodic polling: made by heartbeat and the requests are sent to /heartbeat endpoint
+- broadcast discovery: peerDiscovery component sends UDP packets and, at the same time listens for incoming broadcasts to maintain the correct peer list
+
+### Sequence diagrams
+
+#### get key
+
+![Sequence diagram getKey](images/sequence_diagram_get_key.png)
+
+#### set key
+
+![Sequence diagram setKey](images/sequence_diagram_set_key.png)
+
+#### gossip protocol interaction
+
+![Sequence diagram gossip](images/sequence_diagram_gossip.png)
+
+#### heartbeat polling
+
+![Sequence diagram heartbeat](images/heartbeat_polling.png)
+
+#### peer discovery 
+
+![Sequence diagram heartbeat](images/peerdiscovery.png)
 
 ### Behaviour
 
-- how does _each_ component __behave__ individually (e.g. in _response_ to _events_ or messages)?
-    * some components may be _stateful_, others _stateless_
+#### Api server
 
-- which components are in charge of updating the __state__ of the system? _when_? _how_?
+Api server is stateless, and it works like some sort of orchestrator inside the peer. It handles all CRUD Operations letting gossipManager, heartbeat, memoryStore (and the other dependencies) take care of it, but it doesn't directly have a state.
 
-> State diagrams are welcome here
+#### Heartbeat
+
+Heartbeat is stateless, it's job is to monitor and check other peers
+
+#### In-memory store
+
+In-Memory store is stateful, it stores data as key-value and memorizes, for each couple, even the vector clock (instead of the timestamp, since it's on a distributed environment). The state changes every time a new key-value is added, updated, or deleted;
+
+![State diagram store](images/state_diagram_memory_store.png)
+
+#### Gossip manager
+
+Gossip manager is stateful and handles replication, by sharing information between peers. The two main states in which the gossip manager can be is whenever a gossip is sent (GossipSent data structure) or received (GossipReceived data structure)
+
+![State diagram node](images/state_diagram_gossip_manager.png)
+
+#### Service discovery
+
+Service discovery is a stateless component, it's triggered every once in a while (depending on a fixed interval), and it's job is to broadcast messages to spot new peers in the network.
+
+#### Peer
+
+![State diagram node](images/state_diagram_peer.png)
+
+##### Conflict resolution
+
+Conflict resolution handles the conflict using the last write wins (LWW) mechanism, so depending on the vector clocks, it changes its state (ACCEPT and REJECT)
+
+![State diagram node](images/state_diagram_conflict_resolution.png)
 
 ### Data and Consistency Issues
 
