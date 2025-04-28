@@ -137,42 +137,92 @@ Ideally, the design should be the same, regardless of the technological choices 
 
 ### Architecture
 
-- Which architectural style? 
-    + why?
+The application follows a peer-to-peer (P2P) architecture, where each node is both a client and a server. 
+Since this project aims to emulate nosql replication and synchronization mechanism, the choice was between master-slave and P2P, since these two architectures are the ones used in specific implementations.
+P2P was preferred, since:
+- in master slave, all write operations must pass trough the master node, creating a single point of failure and congestion, that can limit the performance, when the write load is pretty high. In this project, since low latency is a key goal, it's very important to maintain an optimal scalability with an high write demand.
+- it's decentralized, and the fact that each node can operate independently allows to implement BASE mechanism in a simpler way, and it's easier to handle failures;
+- in general, better support for soft state and eventual consistency, allowing the implementation of some specific patterns (like gossip protocol).
+
+![Architecture Image](images/p2p.png)
 
 ### Infrastructure
 
-- are there _infrastructural components_ that need to be introduced? _how many_?
-    * e.g. _clients_, _servers_, _load balancers_, _caches_, _databases_, _message brokers_, _queues_, _workers_, _proxies_, _firewalls_, _CDNs_, _etc._
+The system consists exclusively of peer nodes, each of which acts simultaneously as both a client and a server.
+Each node includes a local in-memory key-value store, an api layer, a gossip communication module and an heartbeat module. So basically, the number of components depends on the number of active peers.
 
-- how do components	_distribute_ over the network? _where_?
-    * e.g. do servers / brokers / databases / etc. sit on the same machine? on the same network? on the same datacenter? on the same continent?
+Peer nodes are distributed across different machines, and they may reside on the same local network (docker compose testing) or may be geographically distributed.
+This infrastructure does not have particular restrictions regarding the physical or network proximity of the nodes.
+Communication between nodes occurs through standard HTTP/REST APIs.
 
-- how do components _find_ each other?
-    * how to _name_ components?
-    * e.g. DNS, _service discovery_, _load balancing_, _etc._
+Each peer can find others, since a decentralized service discovery mechanism was implemented. It's based on a non-blocking UDP broadcast loop, in which messages containing node id and address are included. Each peer memorizes the discovered addresses locally.   
 
-> Component diagrams are welcome here
+![Component diagram Image](images/component_diagram.png)
 
 ### Modelling
 
-- which __domain entities__ are there?
-    * e.g. _users_, _products_, _orders_, _etc._
+#### Domain Entities
 
-- how do _domain entities_ __map to__ _infrastructural components_?
-    * e.g. state of a video game on central server, while inputs/representations on clients
-    * e.g. where to store messages in an IM app? for how long?
+| Entity | Description |
+|:------|:------------|
+| `KeyValueStore` | Logical store for key-value pairs distributed across nodes. |
+| `Node` | A participant in the P2P network; physically a Docker container running a FastAPI server. |
+| `VectorClock` | Metadata structure that tracks causality of operations on each key. |
+| `GossipMessage` | Data structure used to share updates between nodes via HTTP POST. |
+| `HeartbeatMessage` | Lightweight ping message used to monitor peer liveness over HTTP GET. |
+| `PeerUpdate` | Update message sent via UDP broadcast for peer discovery purposes. |
 
-- which __domain events__ are there?
-    * e.g. _user registered_, _product added to cart_, _order placed_, _etc._
+---
 
-- which sorts of __messages__ are exchanged?
-    * e.g. _commands_, _events_, _queries_, _etc._
+#### Domain Entities Mapping to Infrastructural Components
 
-- what information does the __state__ of the system comprehend
-    * e.g. _users' data_, _products' data_, _orders' data_, _etc._
+| Domain Entity | Mapped Component | Description |
+|:-------------|:------------------|:------------|
+| `KeyValuePair` | `InMemoryStore` | Stored in an in-memory Python dictionary periodically persisted to disk. |
+| `Node` | Docker container + FastAPI server | Each node is deployed as an independent container. |
+| `VectorClock` | `VectorClock` object | Maintains versioning for concurrent operations on keys. |
+| `GossipMessages` | HTTP POST `/gossip` | Sent and received through the gossiping API endpoint. |
+| `HeartbeatMessage` | HTTP GET `/heartbeat` | Polled to detect alive peers. |
+| `PeerUpdate` | UDP broadcast socket | Used to discover peers dynamically on the network. |
 
-> Class diagram are welcome here
+---
+
+#### Domain Events
+
+| Event | Description |
+|:-----|:------------|
+| `ValueSet` | A key-value pair was added or updated. |
+| `ValueDeleted` | A key was deleted from the store. |
+| `GossipSent` | A gossip message containing updates was sent to another peer. |
+| `GossipReceived` | A gossip message was received and processed. |
+| `PeerDiscovered` | A new peer was detected via UDP broadcast. |
+
+---
+
+#### Message Types
+
+| Type | Examples | Description |
+|:-----|:---------|:------------|
+| **Commands** | `set(key)`, `delete(key)` | Modify the application state. |
+| **Queries** | `get(key)`, `keys()` | Retrieve information from the store. |
+| **Events** | `GossipMessage`, `HeartbeatMessage`, `PeerBroadcast` | Notify about updates, liveness, or discovery. |
+
+---
+
+## System State
+
+| State Element | Description |
+|:--------------|:------------|
+| `Application data` | Key-value pairs stored in-memory and persisted to disk. |
+| `Vector clocks` | Associated with each key to handle concurrent writes. |
+| `Peer list` | List of currently active peers discovered dynamically. |
+| `Gossip network graph` | Internal structure tracking which updates were sent or received between peers. |
+| `Health state` | Set of alive peers as monitored through heartbeat messages. |
+
+---
+
+
+![Class diagram Image](images/class_diagram.png)
 
 ### Interaction
 
