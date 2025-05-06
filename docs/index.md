@@ -102,13 +102,13 @@ There are 2 main roles, standard users have read-only access, admins have both r
 
 ## 3. Implementation Requirements
 
-### Requirement 9: Programming Language and Framework
+### Requirement 10: Programming Language and Framework
 - **Description**: The system must be implemented using Python, with the FastAPI framework for the API layer.
 - **Acceptance Criteria**:
   - The application must be written in Python and use FastAPI for building the web services.
   - All components of the system must comply with Python's best practices, including code style and modularity.
 
-### Requirement 10: Dockerization
+### Requirement 11: Dockerization
 - **Description**: The system must be containerized using Docker to ensure easy deployment and scaling.
 - **Acceptance Criteria**:
   - A Dockerfile must be provided to build and run the application.
