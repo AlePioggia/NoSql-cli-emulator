@@ -25,3 +25,19 @@ async def test_get_peers():
     assert "http://node1:8000" in peers
     
     await discovery.stop()
+
+@pytest.mark.asyncio
+async def test_multiple_send():
+    discovery = PeerDiscovery(listen_port=9999, broadcast_port=9999)
+    await discovery.start()
+    
+    discovery.discovered.add("http://node1:8000")
+    discovery.discovered.add("http://node2:8000")
+    
+    peers = discovery.get_peers()
+    
+    assert len(peers) == 2
+    assert "http://node1:8000" in peers
+    assert "http://node2:8000" in peers
+    
+    await discovery.stop()
