@@ -42,7 +42,6 @@ async def test_clean_buffer(test_gossip):
 
 @pytest.fixture
 def mock_heartbeat():
-    """Mock di Heartbeat per simulare i peer attivi."""
     heartbeat = AsyncMock(spec=Heartbeat)
     heartbeat.getActivePeers.return_value = [
         "http://peer1:5000",
