@@ -295,9 +295,6 @@ Conflict resolution handles the conflict using the last write wins (LWW) mechani
 
 ### Data and Consistency Issues
 
-- Is there any data that needs to be stored?
-    * _what_ data? _where_? _why_?
-
 The project itself has the ultimate goal to deal with storing data efficiently, avoiding failures and conflicts. 
 The data stored, is the key-value pair, and each pair is linked to a vector clock, that let the system take track of the data version, in order to solve eventual conflicts.
 
