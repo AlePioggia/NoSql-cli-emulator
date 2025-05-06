@@ -1,16 +1,6 @@
 
 - [Alessandro Pioggia](mailto:alessandro.pioggia2@studio.unibo.it)
 
-### AI Disclaimer (if needed)
-
-```
-"During the preparation of this work, the author(s) used [NAME TOOL /
-SERVICE] to [REASON].
-After using this tool/service, the author(s) reviewed and edited the
-content as needed and take(s) full responsibility for the content of the
-final report/artifact."
-```
-
 ## Abstract
 
 The project goal is to develop a lightweight, distributed NoSQL emulator that implements sharding and replication using a peer-to-peer (P2P) architecture. The system will follow the BASE (Basically Available, Soft state, Eventually consistent) approach, ensuring high availability and reasonable fault tolerance while prioritizing low latency for read and write operations. It’s a cli application, interaction will be based on scripts or command line commands.
@@ -21,17 +11,25 @@ Lightweight, distributed NoSQL emulator that implements sharding and replication
 
 ### Use case collection
 
-- Use case collection
-    - _where_ are the users? 
-    Users access the system remotely via internet, using an API key;
-    - _when_ and _how frequently_ do they interact with the system?
-    interaction is very frequent and latency-sensitive, as a distributed key-value storage, the system is designed for high-throughput and low-latency access, potentially handling thousands of requests per second;
-    - _how_ do they _interact_ with the system? which _devices_ are they using?
-    Users interact via http api calls, primarly using PCs, but also smartphone can send their requests, but it's unlikely since for now, there's no GUI, only cli app;
-    - does the system need to _store_ user's __data__? _which_? _where_?
-    The system does not store personal data, authentication is handled through API keys, sold separately. Only the key-value pairs submitted by users are stored, inside the storage containers/nodes
-    - most likely, there will be _multiple_ __roles__ 
-    There are 2 main roles, standard users have read-only access, admins have both read and write permissions.
+#### Users
+
+Users access the system remotely via internet, using an API key.
+
+#### Frequency ant timing of the interaction
+
+Interaction is very frequent and latency-sensitive, as a distributed key-value storage, the system is designed for high-throughput and low-latency access, potentially handling thousands of requests per second.
+
+#### Interaction specs and devices used
+
+Users interact via http api calls, primarly using PCs, but also smartphone can send their requests, but it's unlikely since for now, there's no GUI, only cli app.
+
+#### How personal data or data in general, is handled
+
+The system does not store personal data, authentication is handled through API keys, sold separately. Only the key-value pairs submitted by users are stored, inside the storage containers/nodes
+
+#### Roles
+
+There are 2 main roles, standard users have read-only access, admins have both read and write permissions.
 
 # Requirements
 
@@ -131,9 +129,6 @@ Lightweight, distributed NoSQL emulator that implements sharding and replication
 ## Design
 
 This chapter explains the strategies used to meet the requirements identified in the analysis.
-Ideally, the design should be the same, regardless of the technological choices made during the implementation phase.
-
-> You can re-order the sections as you prefer, but all the sections must be present in the end
 
 ### Architecture
 
@@ -338,8 +333,42 @@ The system uses a gossip protocol to replicate updates between nodes and to sync
 
 ##### Gossip protocol
 
-- gossip protocol description (todo)
+The gossip protocol is a decentralized replication mechanism inspired by how information spreads in social networks. It basically disseminate updates without a central coordinator, so it fits well a P2P architecture.
 
-- testing explanation (todo)
+How it works:
 
-- reconciliation in depth explanation
+Each node periodically selects a subset of peers with which to exchange state, expecting that, in a predetermined time frame, the system will eventually be consistent. The peer selection can be tuned, to reduce traffic, nodes typically choose only a small random subset of peers each round. 
+Gossip protocol gives "for free":
+- failure handling (if a peer is unreachable, its updates will be picked up in a later round);
+- scalability;
+- decentralization.
+
+In this project:
+
+The implementation closely follows this model, with a few tweaks for testing and reliability:
+- high fan-out for testing --> to accelerate convergence and reliably trigger eventual consistency, each node gossips with a large subset of peers every round. In production, this number could be reduced to a small random sample (e.g 2-3 peers) to lower bandwidth.
+- anti-entropy on rejoin --> when a node comes back online after a network partition or crash, the retry logic ensures that it receives every update it missed. The undelivered messages are save in `unsent_updates` and retried until the partition heals, guaranteeing full catch-up.
+
+The implementation is sound to the description, but, for testing reasons it has been chose to keep an high number peer selection during communication, in order to be sure that the eventual consistency will be triggered. Other than that, it has been implemented a reconciliation mechanism, in which, after a node returns available (maybe after a network partition), he will receive a gossip with all information that he should have received in the mean time. 
+
+## Conclusions 
+
+### Personal thoughts
+
+During the realization of this project I could experiment and work on a lot of aspects about distributed systems, such as:
+- replication;
+- network communication;
+- handling failures;
+- dockerization;
+- eventual consistency, soft state;
+- clocks synchronization.
+This work, helped me understand better the practical part of this course, and in some cases it was pretty challenging to get an acceptable result. 
+The most difficult aspect was the gossip protocol implementation, since it handled failure resolution and replication and maybe because it was the first time I implemented it. 
+To conclude, I'm satisfied with the process that led to the realization of the project, since it helped me to understand the subject.
+
+### Future works 
+
+It could be interesting to:
+- work on performance;
+- try out other network protocols; 
+- add advanced database features (such as search, filtering and other functionalities).
