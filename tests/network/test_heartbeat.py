@@ -34,3 +34,18 @@ async def test_send_heartbeat_peer_down(heartbeat_instance, httpx_mock: HTTPXMoc
     result = await heartbeat_instance._send_heartbeat("http://localhost:8000")
     assert result is False, "_send_heartbeat failed for down peer"
     await heartbeat_instance.stop()
+
+@pytest.mark.asyncio
+async def test_send_heartbeat_error(heartbeat_instance, httpx_mock: HTTPXMock):
+    httpx_mock.add_response(url="http://localhost:8000/heartbeat", status_code=400)
+    await heartbeat_instance.start()
+    result = await heartbeat_instance._send_heartbeat("http://localhost:8000")
+    assert result is False, "_send_heartbeat failed for error response"
+    await heartbeat_instance.stop()
+
+@pytest.mark.asyncio
+async def test_add_peer(heartbeat_instance):
+    new_peer = "http://localhost:8002"
+    await heartbeat_instance.add_peer(new_peer)
+    assert new_peer in heartbeat_instance.peers, "Failed to add new peer"
+    assert len(heartbeat_instance.peers) == 3, "Peer list length is incorrect after adding a new peer"
