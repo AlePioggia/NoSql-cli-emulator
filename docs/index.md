@@ -166,43 +166,44 @@ Each peer can find others, since a decentralized service discovery mechanism was
 
 ### Modelling
 
+The system is built around a handful of core concepts—entities, events, messages and overall system state. Below each of them will be presented with a brief description and how they map to the running infrastructure.
+
 #### Domain Entities
 
-| Entity | Description |
-|:------|:------------|
-| `KeyValueStore` | Logical store for key-value pairs distributed across nodes. |
-| `Node` | A participant in the P2P network; physically a Docker container running a FastAPI server. |
-| `VectorClock` | Metadata structure that tracks causality of operations on each key. |
-| `GossipMessage` | Data structure used to share updates between nodes via HTTP POST. |
-| `HeartbeatMessage` | Lightweight ping message used to monitor peer liveness over HTTP GET. |
-| `PeerUpdate` | Update message sent via UDP broadcast for peer discovery purposes. |
-
----
+- **KeyValueStore**  
+  A logical container for all key–value pairs. Under the hood, data is sharded and replicated across multiple nodes.
+- **Node**  
+  A peer in the P2P network. Each runs as a Docker container hosting a FastAPI server.
+- **VectorClock**  
+  Tracks causal history of updates for each key to resolve concurrent writes.
+- **GossipMessage**  
+  Carries updates between nodes using HTTP POST `/gossip`.
+- **HeartbeatMessage**  
+  A simple HTTP GET to `/heartbeat` for liveness checks.
+- **PeerUpdate**  
+  Broadcast via UDP to discover new or returning peers.
 
 #### Domain Entities Mapping to Infrastructural Components
 
-| Domain Entity | Mapped Component | Description |
-|:-------------|:------------------|:------------|
-| `KeyValuePair` | `InMemoryStore` | Stored in an in-memory Python dictionary periodically persisted to disk. |
-| `Node` | Docker container + FastAPI server | Each node is deployed as an independent container. |
-| `VectorClock` | `VectorClock` object | Maintains versioning for concurrent operations on keys. |
-| `GossipMessages` | HTTP POST `/gossip` | Sent and received through the gossiping API endpoint. |
-| `HeartbeatMessage` | HTTP GET `/heartbeat` | Polled to detect alive peers. |
-| `PeerUpdate` | UDP broadcast socket | Used to discover peers dynamically on the network. |
+Each domain concept has its concrete implementation, such that:
 
----
+| Concept         | Implementation                        |
+| --------------- | ------------------------------------- |
+| Key–Value Store | In-memory dict + periodic disk flush  |
+| Node            | Docker container + FastAPI server     |
+| VectorClock     | Custom Python object per key          |
+| GossipMessage   | POST payload on `/gossip` endpoint    |
+| Heartbeat       | GET request on `/heartbeat` endpoint  |
+| Peer Discovery  | UDP broadcast socket                  |
 
 #### Domain Events
 
-| Event | Description |
-|:-----|:------------|
-| `ValueSet` | A key-value pair was added or updated. |
-| `ValueDeleted` | A key was deleted from the store. |
-| `GossipSent` | A gossip message containing updates was sent to another peer. |
-| `GossipReceived` | A gossip message was received and processed. |
-| `PeerDiscovered` | A new peer was detected via UDP broadcast. |
+> _Disclaimer: These domain events are not explicitly defined, rather, they arise as part of the normal workflow and can be defined as the following.
 
----
+- **ValueSet** – a key is created or updated.  
+- **ValueDeleted** – a key is removed.  
+- **GossipSent** / **GossipReceived** – updates propagated or ingested.  
+- **PeerDiscovered** – a new node joins the cluster.
 
 #### Message Types
 
@@ -210,22 +211,18 @@ Each peer can find others, since a decentralized service discovery mechanism was
 |:-----|:---------|:------------|
 | **Commands** | `set(key)`, `delete(key)` | Modify the application state. |
 | **Queries** | `get(key)`, `keys()` | Retrieve information from the store. |
-| **Events** | `GossipMessage`, `HeartbeatMessage`, `PeerBroadcast` | Notify about updates, liveness, or discovery. |
-
----
 
 #### System State
 
-| State Element | Description |
-|:--------------|:------------|
-| `Application data` | Key-value pairs stored in-memory and persisted to disk. |
-| `Vector clocks` | Associated with each key to handle concurrent writes. |
-| `Peer list` | List of currently active peers discovered dynamically. |
-| `Gossip network graph` | Internal structure tracking which updates were sent or received between peers. |
-| `Health state` | Set of alive peers as monitored through heartbeat messages. |
+At runtime, will be kept:
 
----
+- **Application data** – the actual key–value pairs (sharded & replicated).  
+- **Vector clocks** – per-key version histories.  
+- **Peer list** – dynamically discovered active nodes.  
+- **Gossip graph** – who’s exchanged which updates.  
+- **Health status** – which peers are currently alive.
 
+#### Class diagram
 
 ![Class diagram Image](images/class_diagram.png)
 
