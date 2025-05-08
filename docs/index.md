@@ -348,6 +348,19 @@ The implementation closely follows this model, with a few tweaks for testing and
 
 The implementation is sound to the description, but, for testing reasons it has been chose to keep an high number peer selection during communication, in order to be sure that the eventual consistency will be triggered. Other than that, it has been implemented a reconciliation mechanism, in which, after a node returns available (maybe after a network partition), he will receive a gossip with all information that he should have received in the mean time. 
 
+## Testing
+
+This project features three levels of automated tests:
+- unit (pytest);
+- integration (pytest);
+- end-to-end (bash scripts)
+
+Unit and integration tests are included into a github actions CI pipeline, ensuring every push runs a complete test suite. 
+End-to-end tests has been implemented via bash scripts, and can be run after starting the application via docker-compose (more informations on the user guide).
+
+For most of the time, a TDD (test driven development) approach was followed, mostly for unit and integration testing.
+Since adding or changing features, in this particular project, can unintentionally break existing behavior, particular attention and importance was given to regression testing.  
+
 ## Conclusions 
 
 ### Personal thoughts
