@@ -28,7 +28,7 @@ cd NoSql-cli-emulator
 
 ### 2. Start the environment with Docker compose
 
-The service supports a sharding switch, via the ENABLE_SHARDING environment variable, when the valu is set to true, sharding is enabled, otherwise it won't be considered. So in order to run the docker containers, using docker-compose there are these two alternatives:
+The service supports a sharding switch, via the ENABLE_SHARDING environment variable, when the value is set to true, sharding is enabled, otherwise it won't be considered. So in order to run the docker containers, using docker-compose there are these two alternatives:
 
 ```
 # Non-sharding mode
@@ -40,7 +40,7 @@ ENABLE_SHARDING=true docker-compose up
 
 ### 3. Run bash scripts 
 
-The bash scripts, that interact with the service, can be run simply by executing:
+The bash scripts, that interact with the service and can be found in the scripts/ directory, can be run simply by executing:
 
 #### With sharding enabled (ENABLE_SHARDING=true)
 
