@@ -1,5 +1,4 @@
 import xxhash
-from src.config import settings
 import os
 
 class ShardingManager:

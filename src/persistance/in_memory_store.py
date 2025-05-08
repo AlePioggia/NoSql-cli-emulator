@@ -3,7 +3,6 @@ import asyncio
 import aiofiles
 import time
 from src.network.sharding import ShardingManager
-from src.config import settings
 import os
 from src.clocks.vector_clock import VectorClock
 

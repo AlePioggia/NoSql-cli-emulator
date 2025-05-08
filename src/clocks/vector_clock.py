@@ -1,4 +1,3 @@
-# from src.config.settings import settings
 from typing import Dict
 from src.utils.VectorClockComparison import VectorClockComparison
 import os

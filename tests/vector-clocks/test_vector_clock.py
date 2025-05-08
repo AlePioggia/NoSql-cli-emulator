@@ -2,7 +2,6 @@ from src.clocks.vector_clock import VectorClock
 from src.utils.VectorClockComparison import VectorClockComparison
 import pytest 
 from typing import Dict
-from src.config import settings
 
 @pytest.fixture
 def vector_clock():
