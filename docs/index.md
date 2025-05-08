@@ -7,7 +7,13 @@ The project goal is to develop a lightweight, distributed NoSQL emulator that im
 
 ## Concept
 
-Lightweight, distributed NoSQL emulator that implements sharding and replication using a peer-to-peer (P2P) architecture. The system will follow the BASE (Basically Available, Soft state, Eventually consistent) approach, ensuring high availability and reasonable fault tolerance while prioritizing low latency for read and write operations. It’s a cli application, interaction will be based on scripts or command line commands.
+Modern applications often require distributed data stores that can scale horizontally and tolerate node failures without sacrificing responsiveness. This project explores a minimal, peer-to-peer approach to NoSQL emulation, focusing on:
+
+1. **Synchronization** – Construct a mechanism that allows nodes to be up-to-date, with low effort and good efficiency;
+2. **Replication** – Maintaining multiple copies of each data to ensure availability and durability;
+3. **BASE Semantics** – Embracing eventual consistency to optimize for availability and partition tolerance, while keeping the system’s state “soft” and reconciliation asynchronous.  
+
+The P2P design removes the need for a central coordinator, simplifying deployment and demonstrating fault-tolerant behaviors in a distributed setting. This choices will be discussed in depth in the next chapters.
 
 ### Use case collection
 
@@ -15,7 +21,7 @@ Lightweight, distributed NoSQL emulator that implements sharding and replication
 
 Users access the system remotely via internet, using an API key.
 
-#### Frequency ant timing of the interaction
+#### Frequency and timing of the interaction
 
 Interaction is very frequent and latency-sensitive, as a distributed key-value storage, the system is designed for high-throughput and low-latency access, potentially handling thousands of requests per second.
 
@@ -141,6 +147,8 @@ P2P was preferred, since:
 
 ![Architecture Image](images/p2p.png)
 
+*figure 1.* shows the main aspects of nosql p2p replication architecture (taken from big data slides)
+
 ### Infrastructure
 
 The system consists exclusively of peer nodes, each of which acts simultaneously as both a client and a server.
@@ -153,6 +161,8 @@ Communication between nodes occurs through standard HTTP/REST APIs.
 Each peer can find others, since a decentralized service discovery mechanism was implemented. It's based on a non-blocking UDP broadcast loop, in which messages containing node id and address are included. Each peer memorizes the discovered addresses locally.   
 
 ![Component diagram Image](images/component_diagram.png)
+
+*figure 2.* component diagram, explaining the logic behind the structure of a single peer.
 
 ### Modelling
 
@@ -219,6 +229,8 @@ Each peer can find others, since a decentralized service discovery mechanism was
 
 ![Class diagram Image](images/class_diagram.png)
 
+*figure 3.* Class diagram, taking into considerations the main classes.
+
 ### Interaction
 
 #### communication
@@ -237,25 +249,38 @@ Each peer can find others, since a decentralized service discovery mechanism was
 
 ### Sequence diagrams
 
-#### get key
+In this subsection, it's possible to observe and analyze the interactions between components and peers, via sequence diagrams.
+
+#### get element
 
 ![Sequence diagram getKey](images/sequence_diagram_get_key.png)
 
-#### set key
+*figure 4.1.* sequence diagram displaying the process of getting an element based on the key.
+
+#### set element
 
 ![Sequence diagram setKey](images/sequence_diagram_set_key.png)
+
+*figure 4.2.* sequence diagram displaying the process of setting a new element up.
 
 #### gossip protocol interaction
 
 ![Sequence diagram gossip](images/sequence_diagram_gossip.png)
 
+*figure 4.3.* sequence diagram displaying how gossip protocol works, in order to make data replication. 
+
 #### heartbeat polling
 
 ![Sequence diagram heartbeat](images/heartbeat_polling.png)
 
+
+*figure 4.3.* sequence diagram displaying how heartbeat works.
+
 #### peer discovery 
 
-![Sequence diagram heartbeat](images/peerdiscovery.png)
+![Sequence diagram discovery](images/peerdiscovery.png)
+
+*figure 4.4.* sequence diagram displaying how service discovery works, using udp broadcast mechanism.
 
 ### Behaviour
 
@@ -273,11 +298,15 @@ In-Memory store is stateful, it stores data as key-value and memorizes, for each
 
 ![State diagram store](images/state_diagram_memory_store.png)
 
+*figure 5.1.* state diagram, displaying the possible memory store states
+
 #### Gossip manager
 
 Gossip manager is stateful and handles replication, by sharing information between peers. The two main states in which the gossip manager can be is whenever a gossip is sent (GossipSent data structure) or received (GossipReceived data structure)
 
 ![State diagram node](images/state_diagram_gossip_manager.png)
+
+*figure 5.2.* state diagram, displaying the possible gossip manager states.
 
 #### Service discovery
 
@@ -287,11 +316,15 @@ Service discovery is a stateless component, it's triggered every once in a while
 
 ![State diagram node](images/state_diagram_peer.png)
 
+*figure 5.3.* state diagram, displaying the possible peer states.
+
 ##### Conflict resolution
 
 Conflict resolution handles the conflict using the last write wins (LWW) mechanism, so depending on the vector clocks, it changes its state (ACCEPT and REJECT)
 
 ![State diagram node](images/state_diagram_conflict_resolution.png)
+
+*figure 5.4.* state diagram, displaying conflict resolution.
 
 ### Data and Consistency Issues
 
