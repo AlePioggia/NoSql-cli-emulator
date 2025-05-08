@@ -41,9 +41,9 @@ for port in 8001 8002 8003; do
   value=$(echo "$raw_response" | sed -n 's/.*"value"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
 
   if [ "$value" == "$expected" ]; then
-    echo "✅ $key present in $port with value: '$value'"
+    echo "$key present in $port with value: '$value'"
   else
-    echo "❌ Error: $key wrong value in node: $port"
+    echo "Error: $key wrong value in node: $port"
     success=false
   fi
 
@@ -51,10 +51,10 @@ for port in 8001 8002 8003; do
     if [ "$other_key" != "$key" ]; then
             response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$port/get/$other_key -H "$HEADER_API_KEY")
       if [ "$response" == "200" ]; then
-        echo "❌ Error: $other_key wasn't supposed to be saved on node: $port but it is"
+        echo "Error: $other_key wasn't supposed to be saved on node: $port but it is"
         success=false
       else
-        echo "✅ Key: $other_key correctly not present in node: $port"
+        echo "Key: $other_key correctly not present in node: $port"
       fi
     fi
   done
@@ -68,9 +68,9 @@ for port in 8001 8002 8003; do
 done
 
 if [ "$success" = true ]; then
-  echo -e "\n✅ Completed test: sharding works as expected."
+  echo -e "\n Completed test: sharding works as expected."
   exit 0
 else
-  echo -e "\n❌ Failed test: some keys (check logs) are not present in the expected nodes."
+  echo -e "\n Failed test: some keys (check logs) are not present in the expected nodes."
   exit 1
 fi

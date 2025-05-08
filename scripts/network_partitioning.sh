@@ -10,9 +10,11 @@ VALUE_NODE1="value_from_node1"
 VALUE_NODE3="value_from_node3"
 
 echo "Waiting for API nodes to start..."
+
 until curl -s "$API_NODE1/keys" -H "$HEADER_API_KEY" | grep -q "keys"; do
     sleep 2
 done
+
 echo "Nodes appear to be up."
 
 echo "Simulating network partition: disconnecting node3 from the network..."
@@ -58,5 +60,3 @@ echo ""
 echo "Node3:"
 curl -s "$API_NODE3/get/$TEST_KEY" -H "$HEADER_API_KEY"
 echo ""
-
-echo "Test completed!"

@@ -24,9 +24,9 @@ VAL_NODE2=$(curl -s "$NODE2/get/test_key" \
   | grep -o '"value":"[^"]*"' | sed 's/"value":"//;s/"//')
 
 if [ "$VAL_NODE2" = "hello_from_node1" ]; then
-  echo "✅ Gossip propagated successfully!"
+  echo "Gossip propagated successfully!"
 else
-  echo "❌ ERROR: node2 has '$VAL_NODE2', expected 'hello_from_node1'"
+  echo "ERROR: node2 has '$VAL_NODE2', expected 'hello_from_node1'"
   exit 1
 fi
 
@@ -49,13 +49,11 @@ echo "  node2: $VAL2"
 echo "  node3: $VAL3"
 
 if [ "$VAL1" = "$VAL2" ] && [ "$VAL2" = "$VAL3" ]; then
-  echo "✅ Conflict resolved with value: '$VAL1'"
+  echo "Conflict resolved with value: '$VAL1'"
 else
-  echo "❌ Nodes are not in sync:"
+  echo "Nodes are not in sync:"
   echo "   node1: $VAL1"
   echo "   node2: $VAL2"
   echo "   node3: $VAL3"
   exit 1
 fi
-
-echo "✔️ Test completed successfully!"

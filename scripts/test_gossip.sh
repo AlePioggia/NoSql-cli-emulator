@@ -40,9 +40,9 @@ node1_value=$(test_api "/get/$TEST_KEY" "GET" "" "$API_NODE1")
 node2_value=$(test_api "/get/$TEST_KEY" "GET" "" "$API_NODE2")
 node3_value=$(test_api "/get/$TEST_KEY" "GET" "" "$API_NODE3")
 
-echo "🖥 Node 1: $node1_value"
-echo "🖥 Node 2: $node2_value"
-echo "🖥 Node 3: $node3_value"
+echo "Node 1: $node1_value"
+echo "Node 2: $node2_value"
+echo "Node 3: $node3_value"
 
 if [[ "$node1_value" == "$node2_value" && "$node2_value" == "$node3_value" ]]; then
     echo "SUCCESS: Gossip propagation works!"
