@@ -2,7 +2,7 @@
 
 Lightweight, distributed NoSQL emulator that implements sharding and replication using a peer-to-peer (P2P) architecture. The system will follow the BASE (Basically Available, Soft state, Eventually consistent) approach, ensuring high availability and reasonable fault tolerance while prioritizing low latency for read and write operations. It’s a cli application, interaction will be based on scripts or command line commands.
 
-Documentation available at: https://github.com/AlePioggia/NoSql-cli-emulator/deployments/github-pages
+Documentation available at: [https://github.com/AlePioggia/NoSql-cli-emulator/deployments/github-pages](https://alepioggia.github.io/NoSql-cli-emulator/)
 
 ## User guide
 
